@@ -168,9 +168,15 @@ def push(title, msg, prio='high', tags='rotating_light'):
     try:
         import notify
         t = notify.topic()
+        status = 'no topic (NTFY_TOPIC secret missing or empty)'
         if t:
-            urllib.request.urlopen(urllib.request.Request(f"https://ntfy.sh/{t}", data=msg.encode(),
-                                   headers={'Title': title, 'Priority': prio, 'Tags': tags}), timeout=20)
+            r = urllib.request.urlopen(urllib.request.Request(f"https://ntfy.sh/{t}", data=msg.encode(),
+                                       headers={'Title': title, 'Priority': prio, 'Tags': tags}), timeout=20)
+            status = f'sent to topic of length {len(t)} starting {t[:4]}..., ntfy answered HTTP {r.status}'
+        if os.environ.get('NL_TEST_PUSH') == '1':
+            os.makedirs(OUT, exist_ok=True)
+            open(os.path.join(OUT, 'push_test.txt'), 'w').write(f"{dt.datetime.now(PT).isoformat()} {status}\n")
+        print('push status:', status, flush=True)
     except Exception as e:
         print('push failed:', e, flush=True)
 
