@@ -177,8 +177,10 @@ def push(title, msg, prio='high', tags='rotating_light'):
             os.makedirs(OUT, exist_ok=True)
             open(os.path.join(OUT, 'push_test.txt'), 'w').write(f"{dt.datetime.now(PT).isoformat()} {status}\n")
         print('push status:', status, flush=True)
+        print(f'::warning title=push::{status}', flush=True)
     except Exception as e:
         print('push failed:', e, flush=True)
+        print(f'::warning title=push::FAILED {type(e).__name__}: {e}', flush=True)
 
 
 def log(row, name='nearlock_log.csv'):
