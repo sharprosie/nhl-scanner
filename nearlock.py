@@ -161,7 +161,7 @@ def fair_long(m, d0, secs, goals):
 
 
 # ---------------------------------------------------------------- alerts ---
-def push(title, msg, prio='high', tags='rotating_light'):
+def push(title, msg, prio='max', tags='bell,rotating_light'):
     print(f'[PUSH] {title} | {msg}', flush=True)
     if MODE == 'PAPER':
         return
@@ -392,7 +392,7 @@ def fill_results():
 
 if __name__ == '__main__':
     if os.environ.get('NL_TEST_PUSH') == '1':
-        push('Near-lock scanner connected', 'Test from GitHub: NHL near-lock and cash-out alerts are set up.', 'default', 'white_check_mark')
+        push('Near-lock scanner connected', 'Test from GitHub: this is how a near-lock alert will sound (max priority).', 'max', 'bell')
         sys.exit(0)
     if '--once' in sys.argv:
         main(once=True)
