@@ -25,9 +25,11 @@ def note(msg):
         f.write(f"{dt.datetime.now(PT).isoformat(timespec='seconds')} {msg}\n")
 
 
-def games(now):
+def games(now, ahead=0):
     seen = {}
-    for d in {now.astimezone(ET).date(), (now.astimezone(ET) - dt.timedelta(days=1)).date()}:
+    days = {now.astimezone(ET).date(), (now.astimezone(ET) - dt.timedelta(days=1)).date()}
+    days |= {(now.astimezone(ET) + dt.timedelta(days=k)).date() for k in range(1, ahead + 1)}
+    for d in days:
         try:
             sb = get(ESPN.format(d=d.strftime('%Y%m%d'), n=int(time.time())))
         except Exception as e:
@@ -83,7 +85,7 @@ def main(max_hours=5.8, probe=False):
     path = os.path.join(OUT, f"nfl_rec_{dt.datetime.now(PT).strftime('%Y-%m-%d')}.csv.gz")
     new = not os.path.exists(path)
     while time.time() < end:
-        now = dt.datetime.now(dt.timezone.utc); G = games(now)
+        now = dt.datetime.now(dt.timezone.utc); G = games(now, ahead=2 if probe else 0)
         live = {k: g for k, g in G.items() if g['state'] == 'in'}
         soon = [g for g in G.values() if g['state'] == 'pre' and g['start'] - now < dt.timedelta(minutes=15)]
         if probe:
