@@ -23,7 +23,7 @@ jobs:
         with: { python-version: "3.12" }
       - name: Scan live games
         env:
-          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC || secrets.NFTY_TOPIC }}
           NL_TEST_PUSH: ${{ github.event_name == 'workflow_dispatch' && inputs.test && '1' || '0' }}
           NL_MODE: ${{ vars.NL_MODE || 'LIVE' }}
           NL_ONLY: buy
