@@ -1,2 +1,5 @@
 2026-10-14T14:24:57-07:00 no live games; next start None; stopping
 2026-10-14T14:24:57-07:00 finished
+2026-10-14T14:26:16-07:00 SEA@DEN: Polymarket event nfl-sea-den-2026-10-15
+2026-10-14T14:26:16-07:00 PROBE recorded 71 market rows for ['SEA@DEN']
+2026-10-14T14:26:16-07:00 finished
