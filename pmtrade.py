@@ -42,13 +42,14 @@ def amt(x):
         return None
 
 
-def buy(slug, long_side, max_cost, dollars, tick=0.01, dry=False):
+def buy(slug, long_side, max_cost, dollars, tick=0.01, dry=False, size_price=None):
     """Buy one side of a market for at most `dollars`, paying no more than `max_cost` (0-1) per contract.
     Immediate-or-cancel: fills what's available at or under the cap right now, cancels the rest.
     Price sent is always the LONG side's price (Polymarket US rule): for the short side it's 1 - cost."""
     cost = math.floor(max_cost / tick + 1e-9) * tick                     # never above the cap
-    qty = math.floor(dollars / (cost + 0.01))                            # leave room for the fee
-    if qty < 1 or not (0.02 <= cost <= 0.98):
+    sp = min(cost, size_price) if size_price else cost                   # size at the real price when known
+    qty = math.floor(100 * dollars / (sp + 0.02)) / 100                  # partial contracts (0.01); room for the fee
+    if qty < 0.5 or not (0.02 <= cost <= 0.98):
         return dict(ok=False, reason=f'size/price out of range (cost {cost:.2f}, qty {qty})')
     px = cost if long_side else 1 - cost
     body = dict(marketSlug=slug, type='ORDER_TYPE_LIMIT', price=dict(value=f'{px:.3f}', currency='USD'), quantity=qty,
@@ -57,7 +58,13 @@ def buy(slug, long_side, max_cost, dollars, tick=0.01, dry=False):
                 manualOrderIndicator='MANUAL_ORDER_INDICATOR_AUTOMATIC', synchronousExecution=True, maxBlockTime='5')
     if dry:
         return dict(ok=True, paper=True, qty=qty, filled=qty, avg_cost=cost, spent=qty * cost, body=body)
-    r = call('POST', '/v1/orders', body)
+    try:
+        r = call('POST', '/v1/orders', body)
+    except RuntimeError as e:                                            # market only takes whole contracts
+        if 'HTTP 400' not in str(e) or qty == math.floor(qty) or math.floor(qty) < 1:
+            raise
+        body['quantity'] = qty = math.floor(qty)
+        r = call('POST', '/v1/orders', body)
     ex = r.get('executions') or []
     filled = sum(amt(e.get('lastShares')) or 0 for e in ex if e.get('lastShares'))
     paid_long = sum((amt(e.get('lastShares')) or 0) * (amt(e.get('lastPx')) or 0) for e in ex if e.get('lastShares'))

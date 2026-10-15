@@ -80,7 +80,7 @@ try:
         if dollars < 1 or not live:
             continue
         try:
-            r = pmtrade.buy(b['slug'], True, b['cap'], dollars)
+            r = pmtrade.buy(b['slug'], True, b['cap'], dollars, size_price=b.get('price'))
         except Exception:
             r = dict(ok=False)
         if r.get('ok'):

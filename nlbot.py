@@ -101,7 +101,7 @@ class Bot:
             return False
         cap = min(fair - c['min_gap'], c['max_cost'])
         try:
-            r = pmtrade.buy(m['slug'], side == 'long', cap, dollars)
+            r = pmtrade.buy(m['slug'], side == 'long', cap, dollars, size_price=cost)
         except Exception as e:
             self.s['errors'] += 1; self.save()
             if 'HTTP 401' in str(e) or 'HTTP 403' in str(e):
