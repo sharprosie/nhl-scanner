@@ -18,13 +18,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - run: pip install -q reportlab
+      - run: pip install -q reportlab cryptography
       - uses: actions/cache/restore@v4
         with: { path: soccer/state, key: "soccer-seen-${{ github.run_id }}", restore-keys: "soccer-seen-" }
       - name: Check
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC || secrets.NIFTY_TOPIC || secrets.NFTY_TOPIC }}
           BANKROLL: ${{ secrets.BANKROLL }}
+          POLYMARKET_KEY_ID: ${{ secrets.POLYMARKET_KEY_ID }}
+          POLYMARKET_SECRET_KEY: ${{ secrets.POLYMARKET_SECRET_KEY }}
         run: |
           M="${{ github.event.inputs.mode }}"
           python soccer/soccer_alert.py $( [ "$M" = quiet ] && echo --quiet ) $( [ "$M" = seed ] && echo --seed )

@@ -5,5 +5,8 @@
   "per_night": 10.0,
   "min_gap": 0.06,
   "hold_secs": 1.5,
-  "poll_secs": 2
+  "poll_secs": 2,
+  "soccer_big_live": true,
+  "soccer_big_stake": 3.0,
+  "soccer_big_day_cap": 9.0
 }

@@ -21,7 +21,7 @@ try:
 except Exception:
     seen = {}
 now = dt.datetime.utcnow()
-seen = {k: v for k, v in seen.items() if (now - dt.datetime.fromisoformat(v)).days < 10}
+seen = {k: v for k, v in seen.items() if (now - dt.datetime.fromisoformat(v.split('|')[0])).days < 10}
 sec = soccer.run(bankroll)
 key = lambda b: f"{b['game']}|{b['bet']}"
 new = [b for b in sec['bets'] if key(b) not in seen]
@@ -53,4 +53,43 @@ if new and not a.quiet and not a.seed:
 if not a.quiet:
     for b in new:
         seen[key(b)] = now.isoformat()
+json.dump(seen, open(seen_p, 'w'))
+
+# ---- Big club right after a league loss: buy automatically (small, capped), ping the phone. Nothing printed about bets.
+try:
+    sys.path.insert(0, os.path.dirname(HERE)); import bigclub, pmtrade
+    try:
+        cfg = json.load(open(os.path.join(os.path.dirname(HERE), 'bot.json')))
+    except Exception:
+        cfg = {}
+    stake, day_cap = float(cfg.get('soccer_big_stake', 3)), float(cfg.get('soccer_big_day_cap', 9))
+    live = bool(cfg.get('soccer_big_live', True)) and pmtrade.have_keys() and not a.quiet and not a.seed
+    found, _ = bigclub.find(now)
+    today_key = now.strftime('%Y-%m-%d')
+    spent_today = sum(float(v.split('|')[1]) for k, v in seen.items() if k.startswith('bigspent|' + today_key))
+    done = 0
+    for b in found:
+        k = 'big|' + b['slug']
+        if k in seen or not b['buyable']:
+            continue
+        if a.seed:
+            seen[k] = now.isoformat(); continue
+        dollars = min(stake, day_cap - spent_today)
+        if dollars < 1 or not live:
+            continue
+        try:
+            r = pmtrade.buy(b['slug'], True, b['cap'], dollars)
+        except Exception:
+            r = dict(ok=False)
+        if r.get('ok'):
+            seen[k] = now.isoformat(); spent_today += r['spent']; done += 1
+            seen[f'bigspent|{today_key}|{b["slug"]}'] = f"{now.isoformat()}|{r['spent']:.2f}"
+            t = os.environ.get('NTFY_TOPIC', '').strip()
+            if t:
+                push(t, (f"{b['game']}: {b['bet']} at {r['avg_cost']*100:.0f}c, ${r['spent']:.2f}. "
+                         f"Big club after a league loss; Pinnacle fair {b['fair']*100:.0f}%.").encode(),
+                     {'Title': 'Bot bought: soccer big-club bet', 'Tags': 'soccer,robot', 'Priority': 'high'})
+    print(f"::notice title=big-club::{len(found)} candidate(s), {sum(b['buyable'] for b in found)} at a buyable price, {done} bought")
+except Exception as e:
+    print('::warning title=big-club::check failed ' + type(e).__name__)
 json.dump(seen, open(seen_p, 'w'))
