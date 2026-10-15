@@ -21,13 +21,21 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
+      - run: pip install -q cryptography
+      - uses: actions/cache/restore@v4
+        with: { path: bot_state, key: "bot-${{ github.run_id }}", restore-keys: "bot-" }
       - name: Scan live games
         env:
+          POLYMARKET_KEY_ID: ${{ secrets.POLYMARKET_KEY_ID }}
+          POLYMARKET_SECRET_KEY: ${{ secrets.POLYMARKET_SECRET_KEY }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC || secrets.NIFTY_TOPIC || secrets.NFTY_TOPIC }}
           NL_TEST_PUSH: ${{ github.event_name == 'workflow_dispatch' && inputs.test && '1' || '0' }}
           NL_MODE: ${{ vars.NL_MODE || 'LIVE' }}
           NL_ONLY: buy
         run: python nearlock.py 5.8
+      - uses: actions/cache/save@v4
+        if: always()
+        with: { path: bot_state, key: "bot-${{ github.run_id }}" }
       - name: Save logs
         if: always()
         run: |

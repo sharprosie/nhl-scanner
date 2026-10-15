@@ -1,0 +1,7 @@
+{
+  "live": true,
+  "per_trade": 2.0,
+  "per_game": 4.0,
+  "per_night": 10.0,
+  "min_gap": 0.06
+}

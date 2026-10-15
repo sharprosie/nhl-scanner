@@ -241,7 +241,7 @@ def even_strength(g):
     return 'PP' not in descs
 
 
-def scan_game(g, today, cache, sent, bets):
+def scan_game(g, today, cache, sent, bets, bot=None):
     A, H = g['awayTeam']['abbrev'], g['homeTeam']['abbrev']; game = f'{A} @ {H}'
     if g.get('gameState') not in ('LIVE', 'CRIT'):
         return
@@ -283,6 +283,11 @@ def scan_game(g, today, cache, sent, bets):
         state = f"{A} {a_s}-{h_s} {H}, {mm}:{ss:02d} left in the 3rd"
         for side in near:
             gap = f[side] - cost[side]
+            bot_owns = bool(bot and bot.enabled and not bot.s['halted'] and m['kind'] == 'side')
+            if bot_owns:
+                lt = H if m['home_side'] else A
+                team, hc = (lt, m['handicap']) if side == 'long' else ((A if lt == H else H), -m['handicap'])
+                bot.consider(game, m, side, team, hc, f[side], cost[side], f'{A} {a_s}-{h_s} {H} {mm}:{ss:02d}', name[side])
             if gap >= 0.03:
                 log(dict(time=dt.datetime.now(PT).isoformat(timespec='seconds'), date=today, game=game, type='snapshot',
                          bet=name[side], score=f'{a_s}-{h_s}', left=f'{mm}:{ss:02d}', fair=f'{f[side]:.3f}',
@@ -290,6 +295,11 @@ def scan_game(g, today, cache, sent, bets):
             key = f"{today}|{m['slug']}|{side}|{a_s}-{h_s}|buy"
             if gap >= EDGE and cost[side] <= MAX_COST and key not in sent:
                 sent[key] = 1
+                if bot_owns:                                   # the bot handles moneylines/puck lines: no manual alert
+                    log(dict(time=dt.datetime.now(PT).isoformat(timespec='seconds'), date=today, game=game, type='near-lock buy',
+                             bet=name[side], score=f'{a_s}-{h_s}', left=f'{mm}:{ss:02d}', fair=f'{f[side]:.3f}',
+                             price=f'{cost[side]:.2f}', gap=f'{gap:+.3f}', result=''))
+                    continue
                 head = 'PAPER near-lock (log only)' if MODE == 'PAPER' else f'NEAR-LOCK BUY: {name[side]}'
                 push(head, f"{state}. Real chance {f[side]*100:.1f}%, Polymarket asks {cost[side]*100:.0f}c "
                            f"(gap {gap*100:.0f}c). Buy up to {min(cost[side]+0.02, f[side]-0.03)*100:.0f}c, {STAKE} stake. "
@@ -321,6 +331,13 @@ def main(max_hours=7.0, once=False):
     sent = {k: v for k, v in sent.items() if k.startswith(today)}
     cache, end = {}, time.time() + max_hours * 3600
     print(f'Near-lock scanner {today}, mode {MODE}, edge {EDGE}, min fair {MIN_FAIR}', flush=True)
+    bot = None
+    try:
+        import nlbot
+        bot = nlbot.Bot(today)
+        print('bot enabled' if bot.enabled else 'bot off', flush=True)
+    except Exception as e:
+        print('bot unavailable:', type(e).__name__, flush=True)
     while time.time() < end:
         try:
             games = get(f'https://api-web.nhle.com/v1/score/{today}').get('games', [])
@@ -339,16 +356,33 @@ def main(max_hours=7.0, once=False):
         bets = card_bets(today)
         for g in live:
             try:
-                scan_game(g, today, cache, sent, bets)
+                scan_game(g, today, cache, sent, bets, bot)
             except Exception as e:
                 print('scan error', g.get('id'), e, flush=True)
         json.dump(sent, open(sp, 'w'))
+        if bot and bot.s['trades']:
+            try:
+                bot.grade({f"{g['awayTeam']['abbrev']} @ {g['homeTeam']['abbrev']}": (g['awayTeam']['abbrev'], g['homeTeam']['abbrev'],
+                           int(g['awayTeam'].get('score', 0)), int(g['homeTeam'].get('score', 0)))
+                           for g in games if g.get('gameState') in ('OFF', 'FINAL')})
+            except Exception as e:
+                print('bot grade error', type(e).__name__, flush=True)
         if once:
             break
         third = any((g.get('periodDescriptor') or {}).get('number') == 3 for g in live)
-        time.sleep(POLL_LIVE if third else POLL_IDLE)
+        time.sleep((5 if bot and bot.enabled and not bot.s['halted'] else POLL_LIVE) if third else POLL_IDLE)
     fill_results()
     json.dump(sent, open(sp, 'w'))
+    if bot and bot.s['trades']:
+        try:
+            games = get(f'https://api-web.nhle.com/v1/score/{today}').get('games', [])
+            bot.grade({f"{g['awayTeam']['abbrev']} @ {g['homeTeam']['abbrev']}": (g['awayTeam']['abbrev'], g['homeTeam']['abbrev'],
+                       int(g['awayTeam'].get('score', 0)), int(g['homeTeam'].get('score', 0)))
+                       for g in games if g.get('gameState') in ('OFF', 'FINAL')})
+        except Exception:
+            pass
+        if all(t.get('result') for t in bot.s['trades']):
+            bot.summary()
     print('finished', flush=True)
 
 
