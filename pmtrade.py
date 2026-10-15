@@ -67,4 +67,4 @@ def buy(slug, long_side, max_cost, dollars, tick=0.01, dry=False):
     spent = paid_long if long_side else filled - paid_long
     rej = next((e.get('orderRejectReason') or e.get('text') for e in ex if e.get('orderRejectReason')), None)
     return dict(ok=filled > 0, order_id=r.get('id'), qty=qty, filled=filled,
-                avg_cost=(spent / filled) if filled else None, spent=spent, reason=rej or ('no fill at or under cap' if not filled else ''))
+                avg_cost=(spent / filled) if filled else None, spent=spent, reason='' if filled else (rej or 'no fill at or under cap'))
