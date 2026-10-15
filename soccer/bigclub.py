@@ -59,6 +59,7 @@ def find(today=None):
             P = S.pinnacle(S.PIN[lg]); R = last_results(LEAGUE_FILE[lg], today)
         except Exception as ex:
             notes.append(f'{lg}: data unavailable ({type(ex).__name__})'); continue
+        notes.append(f"{lg}: {len(E)} events, {len(R)} teams with results, big clubs whose last league game was a loss: {sum(1 for t in BIG if t in R and R[t][1] < R[t][2])}")
         starts = {}
         for e in E:                                   # each team's upcoming league games, to know which is next
             try:
@@ -85,8 +86,8 @@ def find(today=None):
                 if any(t < sdt for t in starts.get(frozenset(S._norm(me)), [])):
                     continue                          # another league game comes first; its result decides
                 last = R.get(fd)
-                if not last or last[1] >= last[2] or (sdt.date() - last[0]).days > 12:
-                    continue                          # previous league game wasn't a loss (or results file is stale)
+                if not last or last[1] >= last[2] or (sdt.date() - last[0]).days > 21:
+                    continue                          # previous league game wasn't a loss (or results file is stale; 21 days allows for international breaks)
                 best, score = None, 0
                 for g in P:
                     try:

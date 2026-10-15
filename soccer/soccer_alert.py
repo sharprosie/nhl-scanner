@@ -64,7 +64,8 @@ try:
         cfg = {}
     stake, day_cap = float(cfg.get('soccer_big_stake', 3)), float(cfg.get('soccer_big_day_cap', 9))
     live = bool(cfg.get('soccer_big_live', True)) and pmtrade.have_keys() and not a.quiet and not a.seed
-    found, _ = bigclub.find(now)
+    found, bnotes = bigclub.find(now)
+    print('::notice title=big-club data::' + ' / '.join(bnotes))
     today_key = now.strftime('%Y-%m-%d')
     spent_today = sum(float(v.split('|')[1]) for k, v in seen.items() if k.startswith('bigspent|' + today_key))
     done = 0
