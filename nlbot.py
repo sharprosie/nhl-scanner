@@ -1,7 +1,7 @@
 """In-game near-lock BOT: buys a near-lock automatically when the scanner sees it, with hard limits.
 Rules (bot.json can turn it off or change sizes):
   - moneylines and puck lines only; real chance 85%+; price at least 6c under the real chance; never over 97c
-  - the gap must hold for 20+ seconds with the same score (protects against a goal the scoreboard hasn't shown yet)
+  - the gap must show on two checks in a row (~5 seconds apart) with the same score
   - if the price just fell 10c+ in the last minute, wait until that drop is a minute old (same reason)
   - $2 a trade, $4 a game, $10 a night; one buy per market per night; buy-only, immediate-or-cancel
   - stops for the night after 3 losses in a row, $8 net loss, 3 order errors, or a rejected key
