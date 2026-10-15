@@ -1,5 +1,5 @@
 """Price recorder for in-game research (no alerts, no bets): NFL, college football, NHL, NBA.
-Every ~20 seconds during live games, saves the REAL buy (ask) and sell (bid) prices on Polymarket US for each
+Every ~5 seconds during live games (slower when many games are live), saves the REAL buy (ask) and sell (bid) prices on Polymarket US for each
 full-game moneyline, spread and total, plus the game state from ESPN. To keep files small, a market's row is
 written only when its bid or ask changed (or the score/period changed).
 Output: out/rec_<sport>_<date>.csv.gz"""
@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 
 HERE = os.path.dirname(os.path.abspath(__file__)); OUT = os.path.join(HERE, 'out'); os.makedirs(OUT, exist_ok=True)
 ET, PT = ZoneInfo('America/New_York'), ZoneInfo('America/Los_Angeles')
-POLL = 20
+POLL = 5          # seconds between checks; slows down automatically on big slates (stay under ~10 requests/second)
 SPORTS = {   # name: (ESPN path, extra query, Polymarket slug prefix)
     'nfl': ('football/nfl', '', 'nfl'),
     'cfb': ('football/college-football', '&groups=80', 'cfb'),
@@ -147,7 +147,7 @@ def main(max_hours=5.8, probe=False, sports=None):
                 note(f"{g['a']}@{g['h']}: error {e}")
         if probe:
             note(f'PROBE rows by sport: {counts}; games: {[g["sport"] + " " + g["a"] + "@" + g["h"] for g in live]}'); break
-        time.sleep(POLL)
+        time.sleep(max(POLL, len(live) / 10.0))
     note('finished')
 
 
