@@ -77,6 +77,7 @@ def find(today=None):
             except ValueError:
                 continue
             if sdt <= today or sdt > today + dt.timedelta(days=8):
+                if any(big_name(n) for n in S.re.split(r'\s+vs\.?\s+', title, maxsplit=1)): notes.append(f'{title}: outside the next 8 days')
                 continue
             h_name, a_name = [x.strip(' .') for x in S.re.split(r'\s+vs\.?\s+', title, maxsplit=1)]
             for side, me, opp in (('home', h_name, a_name), ('away', a_name, h_name)):
@@ -84,7 +85,7 @@ def find(today=None):
                 if not fd or big_name(opp):
                     continue
                 if any(t < sdt for t in starts.get(frozenset(S._norm(me)), [])):
-                    continue                          # another league game comes first; its result decides
+                    notes.append(f'{title}: {me} has an earlier league game'); continue                          # another league game comes first; its result decides
                 last = R.get(fd)
                 if not last or last[1] >= last[2] or (sdt.date() - last[0]).days > 21:
                     continue                          # previous league game wasn't a loss (or results file is stale; 21 days allows for international breaks)
@@ -99,13 +100,13 @@ def find(today=None):
                         if sc > score:
                             best, score = g, sc
                 if not best or score < 1.0:
-                    continue
+                    notes.append(f'{title}: no Pinnacle match'); continue
                 q = best['fair'].get(('ml', side))
                 if not q or q <= 0.45:
-                    continue
+                    notes.append(f'{title}: {me} not favored enough ({(q or 0)*100:.0f}%)'); continue
                 slug = next((ms for ms, k, *_ in S.contracts(e, h_name, a_name) if k == ('ml', side)), None)
                 if not slug:
-                    continue
+                    notes.append(f'{title}: no Polymarket moneyline found'); continue
                 b, a, bs, as_ = S.bbo(slug)
                 cap = q - S.FEE(q)                     # pay no more than Pinnacle's fair price after the fee
                 bets.append(dict(game=f'{h_name} vs {a_name} ({S.NAMES[lg]})', bet=f'{me} to win', slug=slug, fair=q, cap=cap,
