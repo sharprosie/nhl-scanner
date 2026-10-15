@@ -1,0 +1,5 @@
+time,date,game,type,bet,score,left,fair,price,gap,result
+2026-10-14T19:46:15-07:00,2026-10-14,DAL @ COL,near-lock buy,DAL +1.5,2-1,11:49,0.977,0.90,+0.077,W
+2026-10-14T19:46:37-07:00,2026-10-14,DAL @ COL,near-lock buy,Over 4.5,2-2,11:39,1.000,0.85,+0.150,W
+2026-10-14T20:00:31-07:00,2026-10-14,DAL @ COL,near-lock buy,DAL +1.5,2-2,5:47,0.939,0.86,+0.079,W
+2026-10-14T20:05:56-07:00,2026-10-14,DAL @ COL,near-lock buy,Under 5.5,2-2,3:48,0.884,0.83,+0.054,W
