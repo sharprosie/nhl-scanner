@@ -370,7 +370,7 @@ def main(max_hours=7.0, once=False):
         if once:
             break
         third = any((g.get('periodDescriptor') or {}).get('number') == 3 for g in live)
-        time.sleep((5 if bot and bot.enabled and not bot.s['halted'] else POLL_LIVE) if third else POLL_IDLE)
+        time.sleep((bot.c.get('poll_secs', 2) if bot and bot.enabled and not bot.s['halted'] else POLL_LIVE) if third else POLL_IDLE)
     fill_results()
     json.dump(sent, open(sp, 'w'))
     if bot and bot.s['trades']:

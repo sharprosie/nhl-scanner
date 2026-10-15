@@ -1,7 +1,7 @@
 """In-game near-lock BOT: buys a near-lock automatically when the scanner sees it, with hard limits.
 Rules (bot.json can turn it off or change sizes):
   - moneylines and puck lines only; real chance 85%+; price at least 6c under the real chance; never over 97c
-  - the gap must show on two checks in a row (~5 seconds apart) with the same score
+  - the gap must show on two checks in a row (~2 seconds apart) with the same score
   - if the price just fell 10c+ in the last minute, wait until that drop is a minute old (same reason)
   - $2 a trade, $4 a game, $10 a night; one buy per market per night; buy-only, immediate-or-cancel
   - stops for the night after 3 losses in a row, $8 net loss, 3 order errors, or a rejected key
@@ -14,7 +14,7 @@ import pmtrade
 HERE = os.path.dirname(os.path.abspath(__file__)); SD = os.path.join(HERE, 'bot_state'); os.makedirs(SD, exist_ok=True)
 PT = ZoneInfo('America/Los_Angeles')
 DEF = dict(live=False, per_trade=2.0, per_game=4.0, per_night=10.0, min_gap=0.06, min_fair=0.85, max_cost=0.97,
-           hold_secs=20, drop=0.10, drop_wait=60, max_losses_row=3, max_night_loss=8.0, max_errors=3)
+           hold_secs=1.5, poll_secs=2, drop=0.10, drop_wait=60, max_losses_row=3, max_night_loss=8.0, max_errors=3)
 
 
 class Bot:
