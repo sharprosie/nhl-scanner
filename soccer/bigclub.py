@@ -110,4 +110,8 @@ def find(today=None):
                 cap = q - S.FEE(q)                     # pay no more than Pinnacle's fair price after the fee
                 bets.append(dict(game=f'{h_name} vs {a_name} ({S.NAMES[lg]})', bet=f'{me} to win', slug=slug, fair=q, cap=cap,
                                  price=a, start=S._pt(e.get('startDate') or ''), buyable=bool(a and a <= cap and as_ >= 5)))
+        for t in BIG:
+            if t in R and R[t][1] < R[t][2]:
+                hit = [e.get('title', '') for e in E if any(big_name(n) == t for n in S.re.split(r'\s+vs\.?\s+', e.get('title', ''), maxsplit=1))]
+                notes.append(f"{lg}: {t} lost {R[t][1]}-{R[t][2]} on {R[t][0]}; next on Polymarket: {hit or 'not matched'}")
     return bets, notes
