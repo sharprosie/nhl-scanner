@@ -1,0 +1,33 @@
+name: Price recorder - NFL, college football, NHL, NBA (research only, no bets)
+on:
+  schedule:                    # UTC. Each job stops by itself when nothing is live and nothing starts within 3 hours.
+    - cron: "45 12 * * 0"      # Sun 5:45 AM PT   London NFL games
+    - cron: "45 15 * * 6"      # Sat 8:45 AM PT   college football early window
+    - cron: "45 16 * * 0"      # Sun 9:45 AM PT   NFL early + late afternoon
+    - cron: "45 21 * * *"      # daily 2:45 PM PT  afternoon/evening games (college, NHL, NBA, NFL late)
+    - cron: "40 3 * * *"       # daily 8:40 PM PT  late West Coast games (if the earlier job hit 6 hours)
+  workflow_dispatch:
+    inputs:
+      probe:
+        description: "Probe only: one snapshot of the next game in each sport"
+        type: boolean
+        default: true
+permissions:
+  contents: write
+concurrency: { group: record-all, cancel-in-progress: false }
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Record
+        run: python record_all.py ${{ (github.event_name == 'workflow_dispatch' && inputs.probe) && '--probe' || '' }}
+      - name: Save
+        if: always()
+        run: |
+          git config user.name "nhl-scanner"; git config user.email "nhl-scanner@users.noreply.github.com"
+          git add -f out/rec_* 2>/dev/null || true
+          git commit -m "Price recording $(date -u +%F)" && git pull --rebase -X theirs --autostash && git push || echo "::warning title=save::push failed"
