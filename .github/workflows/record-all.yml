@@ -24,6 +24,8 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - name: Record
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC || secrets.NIFTY_TOPIC || secrets.NFTY_TOPIC }}
         run: python record_all.py ${{ (github.event_name == 'workflow_dispatch' && inputs.probe) && '--probe' || '' }}
       - name: Save
         if: always()

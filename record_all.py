@@ -107,8 +107,21 @@ def rows(g, ev, ts):
     return out
 
 
+def ping(title, msg, prio='default'):
+    t = os.environ.get('NTFY_TOPIC', '').strip()
+    print('[ping]', title, msg, flush=True)
+    if not t:
+        return
+    try:
+        urllib.request.urlopen(urllib.request.Request(f'https://ntfy.sh/{t}', data=msg.encode(),
+                               headers={'Title': title, 'Priority': prio, 'Tags': 'movie_camera'}), timeout=20)
+    except Exception as e:
+        note(f'ping failed {e}')
+
+
 def main(max_hours=5.8, probe=False, sports=None):
     sports = sports or list(SPORTS)
+    STATS = {sp: dict(live=set(), matched=set(), rows=0) for sp in sports}
     end = time.time() + max_hours * 3600
     while time.time() < end:
         now = dt.datetime.now(dt.timezone.utc); live, upcoming = [], []
@@ -130,11 +143,13 @@ def main(max_hours=5.8, probe=False, sports=None):
             time.sleep(60); continue
         ts = now.isoformat(timespec='seconds'); counts = {}
         for g in live:
+            gid = (g['a'], g['h']); STATS[g['sport']]['live'].add(gid)
             try:
                 ev = event(g)
                 if ev is None:
                     continue
-                r = rows(g, ev, ts)
+                STATS[g['sport']]['matched'].add(gid)
+                r = rows(g, ev, ts); STATS[g['sport']]['rows'] += len(r)
                 path = os.path.join(OUT, f"rec_{g['sport']}_{dt.datetime.now(PT).strftime('%Y-%m-%d')}.csv.gz")
                 new = not os.path.exists(path)
                 with gzip.open(path, 'at', newline='') as f:
@@ -149,6 +164,13 @@ def main(max_hours=5.8, probe=False, sports=None):
             note(f'PROBE rows by sport: {counts}; games: {[g["sport"] + " " + g["a"] + "@" + g["h"] for g in live]}'); break
         time.sleep(max(POLL, len(live) / 10.0))
     note('finished')
+    seen = {sp: v for sp, v in STATS.items() if v['live']}
+    if seen and not probe:
+        parts = [f"{sp.upper()}: {len(v['matched'])}/{len(v['live'])} games, {v['rows']:,} price changes" for sp, v in seen.items()]
+        broken = [sp.upper() for sp, v in seen.items() if not v['matched'] or v['rows'] == 0]
+        ping('Recorder: problem' if broken else 'Recorder: done',
+             '; '.join(parts) + (f". Nothing recorded for {', '.join(broken)} - needs a look." if broken else '.'),
+             'high' if broken else 'low')
 
 
 if __name__ == '__main__':
