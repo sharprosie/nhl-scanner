@@ -1,0 +1,6 @@
+2026-10-15T08:20:51-07:00 SEA@DEN: nfl-sea-den-2026-10-15
+2026-10-15T08:20:52-07:00 ECU@UAB: cfb-ecar-uab-2026-10-15 (search)
+2026-10-15T08:20:52-07:00 BUF@TOR: nhl-buf-tor-2026-10-15
+2026-10-15T08:20:52-07:00 TOR@NY: nba-tor-ny-2026-10-15
+2026-10-15T08:20:52-07:00 PROBE rows by sport: {'nfl': 71, 'cfb': 67, 'nhl': 15, 'nba': 27}; games: ['nfl SEA@DEN', 'cfb ECU@UAB', 'nhl BUF@TOR', 'nba TOR@NY']
+2026-10-15T08:20:52-07:00 finished
