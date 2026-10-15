@@ -16,6 +16,10 @@ Skipped on purpose: power plays (the model assumes even strength), overtime, 1st
 Feeds: NHL scoreboard (api-web.nhle.com) and Polymarket US (gateway.polymarket.us). Alerts: ntfy.
 """
 import csv, json, os, sys, time, datetime as dt, urllib.request
+try:
+    import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import quiethours  # 10 PM-7 AM pings are silent
+except Exception:
+    pass
 from functools import lru_cache
 from zoneinfo import ZoneInfo
 

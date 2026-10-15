@@ -4,6 +4,10 @@ full-game moneyline, spread and total, plus the game state from ESPN. To keep fi
 written only when its bid or ask changed (or the score/period changed).
 Output: out/rec_<sport>_<date>.csv.gz"""
 import csv, gzip, json, os, re, sys, time, urllib.parse, urllib.request, datetime as dt
+try:
+    import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import quiethours  # 10 PM-7 AM pings are silent
+except Exception:
+    pass
 from zoneinfo import ZoneInfo
 
 HERE = os.path.dirname(os.path.abspath(__file__)); OUT = os.path.join(HERE, 'out'); os.makedirs(OUT, exist_ok=True)

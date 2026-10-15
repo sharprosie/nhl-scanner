@@ -8,6 +8,10 @@ Rules (bot.json can turn it off or change sizes):
 Public repo rule: nothing about trades is printed or committed. State lives in bot_state/ (Actions cache only);
 each trade goes to your phone."""
 import json, os, time, urllib.request, datetime as dt
+try:
+    import os as _o, sys as _s; _s.path.insert(0, _o.path.dirname(_o.path.abspath(__file__))); import quiethours  # 10 PM-7 AM pings are silent
+except Exception:
+    pass
 from zoneinfo import ZoneInfo
 import pmtrade
 

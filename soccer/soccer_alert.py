@@ -5,6 +5,7 @@ Stake sizes use the BANKROLL secret if set; otherwise the card shows stakes per 
 import os, sys, json, argparse, datetime as dt, urllib.request
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 import soccer, card_pdf
+sys.path.insert(0, os.path.dirname(HERE)); import quiethours  # 10 PM-7 AM pings are silent
 
 ap = argparse.ArgumentParser()
 ap.add_argument('--quiet', action='store_true', help='no phone alert, nothing marked as alerted')
