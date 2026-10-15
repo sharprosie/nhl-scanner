@@ -1,0 +1,25 @@
+name: Polymarket key check (read-only; prints pass/fail only)
+on: { workflow_dispatch: {} }
+permissions: { contents: read }
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -q cryptography
+      - env:
+          POLYMARKET_KEY_ID: ${{ secrets.POLYMARKET_KEY_ID }}
+          POLYMARKET_SECRET_KEY: ${{ secrets.POLYMARKET_SECRET_KEY }}
+        run: |
+          python - <<'PY'
+          import os, re, pmtrade
+          k = os.environ.get('POLYMARKET_KEY_ID', '').strip()
+          print('::notice title=shape::id uuid-like=%s, secret length ok=%s, same=%s' % (bool(re.fullmatch(r'[0-9a-fA-F-]{36}', k)), len(os.environ.get('POLYMARKET_SECRET_KEY','').strip()) == 88, k == os.environ.get('POLYMARKET_SECRET_KEY','').strip()))
+          try:
+              pmtrade.call('GET', '/v1/orders/open'); print('::notice title=key::PASS')
+          except Exception as e:
+              print('::warning title=key::FAIL ' + str(e)[:40])
+          PY
