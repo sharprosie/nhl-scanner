@@ -10,6 +10,7 @@ PH = {'User-Agent': 'Mozilla/5.0', 'X-Api-Key': 'CmX2KcMrXuFmNg6YFbmTxE0y9CIrOi0
 GW = 'https://gateway.polymarket.us/v1'
 FEE = lambda c: 0.05 * c * (1 - c)
 MIN_EV, MAX_SPREAD, MIN_PRICE = 0.04, 0.05, 0.25
+TESTED_ONLY = True   # Oct 15: only full-game match result (home/draw/away), the market the backtest covered (+11.8%, 748 bets)
 
 
 def _get(url, hdr=None):
@@ -112,10 +113,10 @@ def contracts(e, h_name, a_name):
             sd = 'home' if t == hc else ('away' if t == ac else 'draw')
             lab = f'{h_name} to win' if sd == 'home' else (f'{a_name} to win' if sd == 'away' else 'Draw')
             out.append((ms, ('ml', sd), lab, None, None))
-        elif ms.startswith('tsc-') and re.fullmatch(r'\d+pt5', t):
+        elif not TESTED_ONLY and ms.startswith('tsc-') and re.fullmatch(r'\d+pt5', t):
             L = float(t.replace('pt', '.'))
             out.append((ms, ('ou', per, L, 'over'), f'Over {L:g} goals{half}', ('ou', per, L, 'under'), f'Under {L:g} goals{half}'))
-        elif ms.startswith('asc-') and re.fullmatch(r'(neg|pos)-\d+pt5', t):
+        elif not TESTED_ONLY and ms.startswith('asc-') and re.fullmatch(r'(neg|pos)-\d+pt5', t):
             L = float(t.split('-')[1].replace('pt', '.')) * (-1 if t.startswith('neg') else 1)
             out.append((ms, ('sp', per, L, 'home'), f'{h_name} {L:+g}{half}', ('sp', per, L, 'away'), f'{a_name} {-L:+g}{half}'))
     return out
@@ -191,5 +192,5 @@ def run(bankroll, today=None):
                              side=str(side), kind={'ml': 'ml', 'ou': 'total', 'sp': 'spread'}[side[0]],
                              why=f"Pinnacle fair {q*100:.0f}% vs Polymarket {cost*100:.0f}c: +{ev*100:.1f}% value after fee", alt='', check=''))
     bets.sort(key=lambda b: -b['edge'])
-    notes.append(f'{scanned} matches priced against Pinnacle (next 8 days). Rule: bet when Polymarket is 4%+ better than the sharp fair price; bet early, the gap closes by kickoff.')
+    notes.append(f'{scanned} matches priced against Pinnacle (next 8 days). Rule: match result only (home/draw/away), when Polymarket is 4%+ better than the sharp fair price; bet early, the gap closes by kickoff.')
     return dict(sport='SOCCER', title='Soccer — Polymarket vs sharp price (Pinnacle)', bets=bets, scanned=scanned, notes=notes)
