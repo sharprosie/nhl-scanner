@@ -335,7 +335,7 @@ def main(max_hours=7.0, once=False):
     try:
         import nlbot
         bot = nlbot.Bot(today)
-        print('bot enabled' if bot.enabled else 'bot off', flush=True)
+        print('::notice title=bot::' + ('enabled' if bot.enabled else 'off'), flush=True)
     except Exception as e:
         print('bot unavailable:', type(e).__name__, flush=True)
     while time.time() < end:
