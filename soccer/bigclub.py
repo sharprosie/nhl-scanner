@@ -6,6 +6,9 @@ import csv, io, datetime as dt, urllib.request
 import soccer as S
 
 LEAGUE_FILE = {'epl': 'E0', 'lal': 'SP1', 'bun': 'D1', 'sea': 'I1', 'lg1': 'F1'}     # domestic leagues only (as tested)
+# Saudi Pro League (added Oct 15, untested there; $1 stakes): Pinnacle league 10419, results from ESPN (ksa.1)
+SAUDI_PIN, SAUDI_STAKE = 10419, 1.0
+SAUDI_BIG = {'hilal': 'Al Hilal', 'nassr': 'Al Nassr', 'ittihad': 'Al Ittihad', 'ahli': 'Al Ahli'}
 BIG = {  # football-data name: names Polymarket / Pinnacle may use
     'Man United': ['Manchester United', 'Man United', 'Man Utd'], 'Liverpool': ['Liverpool'], 'Arsenal': ['Arsenal'],
     'Chelsea': ['Chelsea'], 'Man City': ['Manchester City', 'Man City'], 'Tottenham': ['Tottenham Hotspur', 'Tottenham', 'Spurs'],
@@ -16,8 +19,10 @@ BIG = {  # football-data name: names Polymarket / Pinnacle may use
     'Marseille': ['Marseille', 'Olympique Marseille', 'Olympique de Marseille']}
 
 
-def big_name(name):
+def big_name(name, lg=None):
     n = S._norm(name)
+    if lg == 'spl':
+        return next((v for k, v in SAUDI_BIG.items() if k in n), None)
     for fd, al in BIG.items():
         if any(S._norm(a) == n for a in al):
             return fd
@@ -46,20 +51,56 @@ def last_results(div, today):
     return out
 
 
+def saudi_results(today):
+    out = {}
+    for k in range(0, 30):
+        d = (today.date() - dt.timedelta(days=k)).strftime('%Y%m%d')
+        try:
+            sb = S._get(f'https://site.api.espn.com/apis/site/v2/sports/soccer/ksa.1/scoreboard?dates={d}')
+        except Exception:
+            continue
+        for e in sb.get('events', []):
+            if e['status']['type']['state'] != 'post':
+                continue
+            c = e['competitions'][0]; t = {x['homeAway']: x for x in c['competitors']}
+            day = dt.datetime.strptime(d, '%Y%m%d').date()
+            hg, ag = int(t['home']['score']), int(t['away']['score'])
+            for side, gf, ga in (('home', hg, ag), ('away', ag, hg)):
+                nm = big_name(t[side]['team']['displayName'], 'spl')
+                if nm and (nm not in out or day > out[nm][0]):
+                    out[nm] = (day, gf, ga)
+    return out
+
+
+def events(prefixes):
+    evs = []
+    for off in range(0, 6000, 200):
+        try:
+            d = S._get(f'{S.GW}/events?limit=200&offset={off}&active=true&closed=false')
+        except Exception:
+            break
+        e = d.get('events', []) if isinstance(d, dict) else d
+        if not e:
+            break
+        evs += [x for x in e if S.re.match(r'^(' + '|'.join(prefixes) + r')-[a-z0-9]+-[a-z0-9]+-\d{4}-\d\d-\d\d$', x.get('slug', ''))]
+    return evs
+
+
 def find(today=None):
     """Return candidate bets: dict(game, bet, slug, fair, cap, price, start)."""
     today = today or dt.datetime.utcnow()
-    evs = [e for e in S.poly_events() if e['slug'].split('-')[0] in LEAGUE_FILE]
+    evs = events(list(LEAGUE_FILE) + ['spl'])
     bets, notes = [], []
     by_lg = {}
     for e in evs:
         by_lg.setdefault(e['slug'].split('-')[0], []).append(e)
     for lg, E in by_lg.items():
         try:
-            P = S.pinnacle(S.PIN[lg]); R = last_results(LEAGUE_FILE[lg], today)
+            P = S.pinnacle(SAUDI_PIN if lg == 'spl' else S.PIN[lg])
+            R = saudi_results(today) if lg == 'spl' else last_results(LEAGUE_FILE[lg], today)
         except Exception as ex:
             notes.append(f'{lg}: data unavailable ({type(ex).__name__})'); continue
-        notes.append(f"{lg}: {len(E)} events, {len(R)} teams with results, big clubs whose last league game was a loss: {sum(1 for t in BIG if t in R and R[t][1] < R[t][2])}")
+        notes.append(f"{lg}: {len(E)} events, {len(R)} teams with results, big clubs whose last league game was a loss: {sum(1 for t in (SAUDI_BIG.values() if lg == 'spl' else BIG) if t in R and R[t][1] < R[t][2])}")
         starts = {}
         for e in E:                                   # each team's upcoming league games, to know which is next
             try:
@@ -77,12 +118,12 @@ def find(today=None):
             except ValueError:
                 continue
             if sdt <= today or sdt > today + dt.timedelta(days=8):
-                if any(big_name(n) for n in S.re.split(r'\s+vs\.?\s+', title, maxsplit=1)): notes.append(f'{title}: outside the next 8 days')
+                if any(big_name(n, lg) for n in S.re.split(r'\s+vs\.?\s+', title, maxsplit=1)): notes.append(f'{title}: outside the next 8 days')
                 continue
             h_name, a_name = [x.strip(' .') for x in S.re.split(r'\s+vs\.?\s+', title, maxsplit=1)]
             for side, me, opp in (('home', h_name, a_name), ('away', a_name, h_name)):
-                fd = big_name(me)
-                if not fd or big_name(opp):
+                fd = big_name(me, lg)
+                if not fd or big_name(opp, lg):
                     continue
                 if any(t < sdt for t in starts.get(frozenset(S._norm(me)), [])):
                     notes.append(f'{title}: {me} has an earlier league game'); continue                          # another league game comes first; its result decides
@@ -109,10 +150,10 @@ def find(today=None):
                     notes.append(f'{title}: no Polymarket moneyline found'); continue
                 b, a, bs, as_ = S.bbo(slug)
                 cap = q - S.FEE(q)                     # pay no more than Pinnacle's fair price after the fee
-                bets.append(dict(game=f'{h_name} vs {a_name} ({S.NAMES[lg]})', bet=f'{me} to win', slug=slug, fair=q, cap=cap,
-                                 price=a, start=S._pt(e.get('startDate') or ''), buyable=bool(a and a <= cap and as_ >= 5)))
-        for t in BIG:
+                bets.append(dict(game=f"{h_name} vs {a_name} ({S.NAMES.get(lg, 'Saudi Pro League')})", bet=f'{me} to win', slug=slug, fair=q, cap=cap,
+                                 price=a, start=S._pt(e.get('startDate') or ''), stake=SAUDI_STAKE if lg == 'spl' else None, buyable=bool(a and a <= cap and as_ >= 5)))
+        for t in (SAUDI_BIG.values() if lg == 'spl' else BIG):
             if t in R and R[t][1] < R[t][2]:
-                hit = [e.get('title', '') for e in E if any(big_name(n) == t for n in S.re.split(r'\s+vs\.?\s+', e.get('title', ''), maxsplit=1))]
+                hit = [e.get('title', '') for e in E if any(big_name(n, lg) == t for n in S.re.split(r'\s+vs\.?\s+', e.get('title', ''), maxsplit=1))]
                 notes.append(f"{lg}: {t} lost {R[t][1]}-{R[t][2]} on {R[t][0]}; next on Polymarket: {hit or 'not matched'}")
     return bets, notes

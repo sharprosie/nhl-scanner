@@ -75,7 +75,7 @@ try:
             continue
         if a.seed:
             seen[k] = now.isoformat(); continue
-        dollars = min(stake, day_cap - spent_today)
+        dollars = min(b.get('stake') or stake, day_cap - spent_today)
         if dollars < 1 or not live:
             continue
         try:
