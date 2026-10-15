@@ -1,0 +1,32 @@
+name: Soccer price check - hourly (alerts go to your phone only)
+on:
+  schedule:
+    - cron: "20 * * * *"       # every hour at :20
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "normal | quiet (no alert) | seed (mark current bets as already alerted)"
+        default: normal
+permissions:
+  contents: read
+concurrency: { group: soccer, cancel-in-progress: false }
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -q reportlab
+      - uses: actions/cache/restore@v4
+        with: { path: soccer/state, key: "soccer-seen-${{ github.run_id }}", restore-keys: "soccer-seen-" }
+      - name: Check
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC || secrets.NIFTY_TOPIC || secrets.NFTY_TOPIC }}
+          BANKROLL: ${{ secrets.BANKROLL }}
+        run: |
+          M="${{ github.event.inputs.mode }}"
+          python soccer/soccer_alert.py $( [ "$M" = quiet ] && echo --quiet ) $( [ "$M" = seed ] && echo --seed )
+      - uses: actions/cache/save@v4
+        with: { path: soccer/state, key: "soccer-seen-${{ github.run_id }}" }
