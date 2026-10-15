@@ -166,11 +166,12 @@ def main(max_hours=5.8, probe=False, sports=None):
     note('finished')
     seen = {sp: v for sp, v in STATS.items() if v['live']}
     if seen and not probe:
-        parts = [f"{sp.upper()}: {len(v['matched'])}/{len(v['live'])} games, {v['rows']:,} price changes" for sp, v in seen.items()]
         broken = [sp.upper() for sp, v in seen.items() if not v['matched'] or v['rows'] == 0]
-        ping('Recorder: problem' if broken else 'Recorder: done',
-             '; '.join(parts) + (f". Nothing recorded for {', '.join(broken)} - needs a look." if broken else '.'),
-             'high' if broken else 'low')
+        total = sum(len(v['matched']) for v in seen.values())
+        if broken:
+            ping('Recorder problem', f"Nothing recorded for {', '.join(broken)}.", 'high')
+        else:
+            ping('Recorder OK', f'{total} games recorded.', 'low')
 
 
 if __name__ == '__main__':
