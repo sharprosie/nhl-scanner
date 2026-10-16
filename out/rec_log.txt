@@ -4,3 +4,19 @@
 2026-10-15T08:20:52-07:00 TOR@NY: nba-tor-ny-2026-10-15
 2026-10-15T08:20:52-07:00 PROBE rows by sport: {'nfl': 71, 'cfb': 67, 'nhl': 15, 'nba': 27}; games: ['nfl SEA@DEN', 'cfb ECU@UAB', 'nhl BUF@TOR', 'nba TOR@NY']
 2026-10-15T08:20:52-07:00 finished
+2026-10-15T16:05:33-07:00 NYI@OTT: nhl-nyi-ott-2026-10-15
+2026-10-15T16:06:25-07:00 VAN@FLA: nhl-van-fla-2026-10-15
+2026-10-15T16:07:24-07:00 SEA@TB: nhl-sea-tb-2026-10-15
+2026-10-15T16:08:18-07:00 NYR@NJ: nhl-nyr-nj-2026-10-15
+2026-10-15T16:12:00-07:00 BUF@TOR: nhl-buf-tor-2026-10-15
+2026-10-15T16:35:51-07:00 ECU@UAB: cfb-ecar-uab-2026-10-15 (search)
+2026-10-15T16:37:54-07:00 PHI@DET: nhl-phi-det-2026-10-15
+2026-10-15T16:42:51-07:00 TOR@NY: nba-tor-ny-2026-10-15
+2026-10-15T17:08:07-07:00 WPG@CHI: nhl-wpg-chi-2026-10-15
+2026-10-15T17:08:38-07:00 STL@MIN: nhl-stl-min-2026-10-15
+2026-10-15T17:16:07-07:00 SEA@DEN: nfl-sea-den-2026-10-15
+2026-10-15T17:41:22-07:00 OKC@HOU: nba-okc-hou-2026-10-15
+2026-10-15T18:05:07-07:00 UTA@EDM: nhl-uta-edm-2026-10-15
+2026-10-15T19:43:44-07:00 cfb scoreboard error <urlopen error _ssl.c:993: The handshake operation timed out>
+2026-10-15T20:00:06-07:00 nba scoreboard error The read operation timed out
+2026-10-15T20:55:19-07:00 finished
