@@ -1,6 +1,7 @@
 """In-game near-lock BOT: buys a near-lock automatically when the scanner sees it, with hard limits.
 Rules (bot.json can turn it off or change sizes):
-  - moneylines and puck lines only; real chance 85%+; price at least 6c under the real chance; never over 97c
+  - moneylines and puck lines only; real chance 85%+; price under the real chance by 8c (20-10 min left), 6c (10-5), 5c (<5); never over 97c
+  - skips if less than ~$1 is for sale at the price, or if we already hold the other team in this game
   - the gap must show on two checks in a row (~2 seconds apart) with the same score
   - if the price just fell 10c+ in the last minute, wait until that drop is a minute old (same reason)
   - $2 a trade, $4 a game, $10 a night; one buy per market per night; buy-only, immediate-or-cancel
@@ -17,7 +18,7 @@ import pmtrade
 
 HERE = os.path.dirname(os.path.abspath(__file__)); SD = os.path.join(HERE, 'bot_state'); os.makedirs(SD, exist_ok=True)
 PT = ZoneInfo('America/Los_Angeles')
-DEF = dict(live=False, per_trade=2.0, per_game=4.0, per_night=10.0, min_gap=0.06, min_fair=0.85, max_cost=0.97,
+DEF = dict(live=False, per_trade=2.0, per_game=4.0, per_night=10.0, min_gap=0.06, gap_early=0.08, gap_mid=0.06, gap_late=0.05, min_fill=1.0, min_fair=0.85, max_cost=0.97,
            hold_secs=1.5, poll_secs=2, drop=0.10, drop_wait=60, max_losses_row=3, max_night_loss=8.0, max_errors=3)
 
 
@@ -73,7 +74,31 @@ class Bot:
             self.halt(f'Down ${-net:.2f} tonight.')
         self.save()
 
-    def consider(self, game, m, side, team, handicap, fair, cost, score, label):
+    def gap_needed(self, secs):
+        c = self.c                                   # more cushion with more time left (Oct 15 strategy)
+        return c['gap_early'] if secs > 600 else (c['gap_mid'] if secs > 300 else c['gap_late'])
+
+    def against_own(self, slug, team):
+        """True if we already hold a position in this game favoring the OTHER team (never bet against ourselves)."""
+        try:
+            P = pmtrade.call('GET', '/v1/portfolio/positions').get('positions', {})
+        except Exception:
+            return True                              # can't check -> don't risk it
+        key = '-'.join(slug.split('-')[1:7])         # nhl-away-home-yyyy-mm-dd
+        a, h = key.split('-')[1], key.split('-')[2]
+        t = team.lower()
+        for k, v in P.items():
+            if key not in k or k.startswith('tsc-'):
+                continue
+            n = float(v.get('netPosition') or 0)
+            if n == 0:
+                continue
+            held = a if n > 0 else h                 # long = away team, short = home team
+            if not (t.startswith(held) or held.startswith(t)):
+                return True
+        return False
+
+    def consider(self, game, m, side, team, handicap, fair, cost, score, label, secs=0):
         """Called every scan for a near-lock side. Returns True if the bot bought it (so skip the manual alert)."""
         if not self.enabled or self.s['halted'] or m['kind'] != 'side':
             return False
@@ -81,7 +106,8 @@ class Bot:
         h = [x for x in self.hist.get(key, []) if now - x[0] <= 90] + [(now, cost)]
         self.hist[key] = h
         gap = fair - cost
-        if fair < c['min_fair'] or gap < c['min_gap'] or cost > c['max_cost']:
+        need = self.gap_needed(secs)
+        if fair < c['min_fair'] or gap < need or cost > c['max_cost']:
             self.seen.pop(key, None); return False
         first = self.seen.get(key)
         if not first or first[1] != score:
@@ -99,7 +125,16 @@ class Bot:
         dollars = min(c['per_trade'], c['per_game'] - spent_game, c['per_night'] - spent_night)
         if dollars < 0.5:
             return False
-        cap = min(fair - c['min_gap'], c['max_cost'])
+        cap = min(fair - need, c['max_cost'])
+        try:                                         # skip if less than ~$1 is for sale at the price
+            md = pmtrade.public(f"/markets/{m['slug']}/bbo").get('marketData', {})
+            depth = float(md.get('askShares' if side == 'long' else 'bidShares') or 0)
+            if depth * cost < c['min_fill']:
+                return False
+        except Exception:
+            pass
+        if self.against_own(m['slug'], team):
+            return False
         try:
             r = pmtrade.buy(m['slug'], side == 'long', cap, dollars, size_price=cost)
         except Exception as e:

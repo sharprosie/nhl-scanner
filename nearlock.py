@@ -291,7 +291,7 @@ def scan_game(g, today, cache, sent, bets, bot=None):
             if bot_owns:
                 lt = H if m['home_side'] else A
                 team, hc = (lt, m['handicap']) if side == 'long' else ((A if lt == H else H), -m['handicap'])
-                bot.consider(game, m, side, team, hc, f[side], cost[side], f'{A} {a_s}-{h_s} {H} {mm}:{ss:02d}', name[side])
+                bot.consider(game, m, side, team, hc, f[side], cost[side], f'{A} {a_s}-{h_s} {H} {mm}:{ss:02d}', name[side], secs)
             if gap >= 0.03:
                 log(dict(time=dt.datetime.now(PT).isoformat(timespec='seconds'), date=today, game=game, type='snapshot',
                          bet=name[side], score=f'{a_s}-{h_s}', left=f'{mm}:{ss:02d}', fair=f'{f[side]:.3f}',
@@ -299,7 +299,7 @@ def scan_game(g, today, cache, sent, bets, bot=None):
             key = f"{today}|{m['slug']}|{side}|{a_s}-{h_s}|buy"
             if gap >= EDGE and cost[side] <= MAX_COST and key not in sent:
                 sent[key] = 1
-                if bot_owns:                                   # the bot handles moneylines/puck lines: no manual alert
+                if bot and bot.enabled:                        # bot-only: no manual buy alerts (logged only)
                     log(dict(time=dt.datetime.now(PT).isoformat(timespec='seconds'), date=today, game=game, type='near-lock buy',
                              bet=name[side], score=f'{a_s}-{h_s}', left=f'{mm}:{ss:02d}', fair=f'{f[side]:.3f}',
                              price=f'{cost[side]:.2f}', gap=f'{gap:+.3f}', result=''))

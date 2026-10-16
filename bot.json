@@ -8,5 +8,9 @@
   "poll_secs": 2,
   "soccer_big_live": true,
   "soccer_big_stake": 3.0,
-  "soccer_big_day_cap": 9.0
+  "soccer_big_day_cap": 9.0,
+  "gap_early": 0.08,
+  "gap_mid": 0.06,
+  "gap_late": 0.05,
+  "min_fill": 1.0
 }
