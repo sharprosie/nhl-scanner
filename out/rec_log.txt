@@ -20,3 +20,5 @@
 2026-10-15T19:43:44-07:00 cfb scoreboard error <urlopen error _ssl.c:993: The handshake operation timed out>
 2026-10-15T20:00:06-07:00 nba scoreboard error The read operation timed out
 2026-10-15T20:55:19-07:00 finished
+2026-10-15T21:46:53-07:00 no live games; next start 2026-10-16 23:00:00+00:00; stopping
+2026-10-15T21:46:53-07:00 finished
