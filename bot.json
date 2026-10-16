@@ -2,7 +2,7 @@
   "live": true,
   "per_trade": 2.0,
   "per_game": 4.0,
-  "per_night": 10.0,
+  "per_night": 12.0,
   "min_gap": 0.06,
   "hold_secs": 1.5,
   "poll_secs": 2,
@@ -14,6 +14,12 @@
   "gap_late": 0.05,
   "min_fill": 1.0,
   "football_under": {
-    "live": true
+    "live": true,
+    "nfl": {
+      "week_cap": 20.0
+    },
+    "cfb": {
+      "week_cap": 20.0
+    }
   }
 }

@@ -4,13 +4,13 @@ live total is slow to come down. Late in the 1st quarter (under 5:00 left), buy 
   - both teams are passing badly (net passing yards per dropback: NFL < 4.0, college < 4.5; ESPN live box score), and
   - the market is still slow: the main line has dropped 3 points or less since we first saw it, and the Under costs 40-70c.
 History (NFL 2012-25, vs the Vegas closing total): low 1st quarter + both offenses struggling -> under about 70-75%.
-Unproven against live prices. NFL $2 a game / $10 a day, college $1 a game / $10 a day. Nothing printed about trades."""
+Unproven against live prices. NFL $2 a game / $20 a week, college $1 a game / $20 a week (Tue-Mon, Pacific). Nothing printed about trades."""
 import json, os, time, datetime as dt, urllib.request
 import pmtrade
 HERE = os.path.dirname(os.path.abspath(__file__)); SD = os.path.join(HERE, 'bot_state'); os.makedirs(SD, exist_ok=True)
 CFG = dict(live=True, min_cost=0.40, max_cost=0.70, max_line_drop=3.0, min_dropbacks=3,
-           nfl=dict(stake=2.0, day_cap=10.0, max_pts=7, max_ypd=4.0),
-           cfb=dict(stake=1.0, day_cap=10.0, max_pts=10, max_ypd=4.5))
+           nfl=dict(stake=2.0, week_cap=20.0, max_pts=7, max_ypd=4.0),
+           cfb=dict(stake=1.0, week_cap=20.0, max_pts=10, max_ypd=4.5))
 ESPN_SUM = {'nfl': 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event={id}',
             'cfb': 'https://site.api.espn.com/apis/site/v2/sports/football/college-football/summary?event={id}'}
 _checked, _base = {}, {}
@@ -28,6 +28,21 @@ def _cfg():
     except Exception:
         pass
     return c
+
+
+def _week_spent(sp):
+    """Total spent this betting week (Tuesday through Monday, Pacific) for one league, across the daily state files."""
+    from zoneinfo import ZoneInfo
+    today = dt.datetime.now(ZoneInfo('America/Los_Angeles')).date()
+    start = today - dt.timedelta(days=(today.weekday() - 1) % 7)          # most recent Tuesday
+    tot = 0.0
+    for i in range((today - start).days + 1):
+        d = start + dt.timedelta(days=i)
+        try:
+            tot += float(json.load(open(os.path.join(SD, f"fbunder_{d.isoformat()}.json"))).get('spent', {}).get(sp, 0.0))
+        except Exception:
+            pass
+    return tot
 
 
 def _state():
@@ -87,7 +102,8 @@ def consider(g, ev):
         return
     p, s = _state()
     spent = s['spent'].get(sp, 0.0)
-    if key in s['done'] or spent + 0.5 > s_cfg['day_cap']:
+    week = _week_spent(sp)                                # Oct 16: $20 a week per league (NFL, college), not per day
+    if key in s['done'] or week + 0.5 > s_cfg['week_cap']:
         return
     slug, cost, line = mt
     if key not in _base or _base[key] - line > c['max_line_drop'] or not (c['min_cost'] <= cost <= c['max_cost']):
@@ -102,7 +118,7 @@ def consider(g, ev):
     if not ypd or max(ypd) >= s_cfg['max_ypd']:
         return                                            # someone can throw: not a grind
     try:
-        r = pmtrade.buy(slug, False, min(cost + 0.01, c['max_cost']), min(s_cfg['stake'], s_cfg['day_cap'] - spent), size_price=cost)
+        r = pmtrade.buy(slug, False, min(cost + 0.01, c['max_cost']), min(s_cfg['stake'], s_cfg['week_cap'] - week), size_price=cost)
     except Exception:
         r = dict(ok=False)
     s['done'].append(key)
