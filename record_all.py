@@ -153,6 +153,10 @@ def main(max_hours=5.8, probe=False, sports=None):
                 if ev is None:
                     continue
                 STATS[g['sport']]['matched'].add(gid)
+                try:
+                    import fbunder; fbunder.consider(g, ev)
+                except Exception:
+                    pass
                 r = rows(g, ev, ts); STATS[g['sport']]['rows'] += len(r)
                 path = os.path.join(OUT, f"rec_{g['sport']}_{dt.datetime.now(PT).strftime('%Y-%m-%d')}.csv.gz")
                 new = not os.path.exists(path)

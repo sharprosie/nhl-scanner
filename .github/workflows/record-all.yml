@@ -23,10 +23,18 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
+      - run: pip install -q cryptography
+      - uses: actions/cache/restore@v4
+        with: { path: bot_state, key: "bot-fb-${{ github.run_id }}", restore-keys: "bot-fb-" }
       - name: Record
         env:
+          POLYMARKET_KEY_ID: ${{ secrets.POLYMARKET_KEY_ID }}
+          POLYMARKET_SECRET_KEY: ${{ secrets.POLYMARKET_SECRET_KEY }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC || secrets.NIFTY_TOPIC || secrets.NFTY_TOPIC }}
         run: python record_all.py ${{ (github.event_name == 'workflow_dispatch' && inputs.probe) && '--probe' || '' }}
+      - uses: actions/cache/save@v4
+        if: always()
+        with: { path: bot_state, key: "bot-fb-${{ github.run_id }}" }
       - name: Save
         if: always()
         run: |
