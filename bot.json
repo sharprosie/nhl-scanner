@@ -14,6 +14,6 @@
   "gap_late": 0.05,
   "min_fill": 1.0,
   "football_under": {
-    "live": false
+    "live": true
   }
 }
