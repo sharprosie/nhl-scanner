@@ -53,7 +53,7 @@ def games(sport, now, ahead=0):
             poss = next((x['team']['abbreviation'] for x in c['competitors']
                          if sit.get('possession') and x['team']['id'] == sit.get('possession')), '')
             seen[ev['id']] = dict(
-                sport=sport, a=tm['away']['team']['abbreviation'], h=tm['home']['team']['abbreviation'],
+                id=ev['id'], sport=sport, a=tm['away']['team']['abbreviation'], h=tm['home']['team']['abbreviation'],
                 an=tm['away']['team'].get('shortDisplayName') or tm['away']['team'].get('displayName', ''),
                 hn=tm['home']['team'].get('shortDisplayName') or tm['home']['team'].get('displayName', ''),
                 start=dt.datetime.fromisoformat(ev['date'].replace('Z', '+00:00')), state=st['type']['state'],

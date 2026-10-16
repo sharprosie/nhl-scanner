@@ -1,10 +1,13 @@
-"""Football slow-start Under (added Oct 15, 2026 from the SEA-DEN and ECU-UAB games; unproven, small stakes).
-Early in the 2nd quarter, if the game is low scoring (NFL <= 7 pts, college <= 10), buy the Under on the main live total
-(the line priced nearest 50c), only if it costs 40-70c. $2, once per game, $10 a day. Nothing printed about trades."""
+"""NFL slow-start Under, v2 (Oct 15, 2026). Late in the 1st quarter (under 5:00 left), if 7 or fewer points AND both teams
+are passing under 4 yards per dropback (ESPN live box score), buy the Under on the main live total (line nearest 50c),
+only at 40-70c. $2, once per game, $10 a day. History 2012-25: low Q1 + bad passing -> under the pregame total 75% (364 games).
+Unproven against LIVE prices; small stakes. Nothing printed about trades."""
 import json, os, datetime as dt, urllib.request
 import pmtrade
 HERE = os.path.dirname(os.path.abspath(__file__)); SD = os.path.join(HERE, 'bot_state'); os.makedirs(SD, exist_ok=True)
-CFG = dict(live=True, stake=2.0, day_cap=10.0, nfl_max_pts=7, cfb_max_pts=10, min_cost=0.40, max_cost=0.70)
+CFG = dict(live=True, stake=2.0, day_cap=10.0, max_pts=7, max_ypd=4.0, min_dropbacks=6, min_cost=0.40, max_cost=0.70)
+ESPN_SUM = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event={id}'
+_checked = {}
 
 
 def _cfg():
@@ -28,17 +31,36 @@ def _amt(x):
 
 def consider(g, ev):
     c = _cfg()
-    if not c['live'] or not pmtrade.have_keys() or g['sport'] not in ('nfl', 'cfb'):
+    if not c['live'] or not pmtrade.have_keys() or g['sport'] != 'nfl':
         return
     try:
         per = int(g.get('period') or 0); mm = int(str(g.get('clock') or '0:00').split(':')[0])
         pts = int(g.get('sa') or 0) + int(g.get('sh') or 0)
     except ValueError:
         return
-    if per != 2 or mm < 12 or pts > c[f"{g['sport']}_max_pts"]:
-        return                                            # only early in the 2nd quarter of a low-scoring game
+    if per != 1 or mm >= 5 or pts > c['max_pts']:
+        return                                            # only late in the 1st quarter of a low-scoring game
     p, s = _state(); key = f"{g['sport']}|{g['a']}@{g['h']}"
     if key in s['done'] or s['spent'] + 1 > c['day_cap']:
+        return
+    import time
+    if time.time() - _checked.get(key, 0) < 30:
+        return                                            # box score at most every 30 s per game
+    _checked[key] = time.time()
+    try:                                                  # both teams' passing: net passing yards per dropback
+        box = json.loads(urllib.request.urlopen(urllib.request.Request(ESPN_SUM.format(id=g['id']), headers={'User-Agent': 'Mozilla/5.0'}), timeout=20).read())
+        ypd = []
+        for tm in box['boxscore']['teams']:
+            st = {x['name']: x.get('displayValue') for x in tm.get('statistics', [])}
+            npy = float(st.get('netPassingYards') or 0)
+            att = int(str(st.get('completionAttempts') or '0/0').replace('-', '/').split('/')[1])
+            sk = int(str(st.get('sacksYardsLost') or '0-0').split('-')[0])
+            if att + sk < c['min_dropbacks'] // 2:
+                return                                    # too few dropbacks yet to judge
+            ypd.append(npy / max(att + sk, 1))
+        if len(ypd) != 2 or max(ypd) >= c['max_ypd']:
+            return                                        # someone is throwing fine: not a defensive grind
+    except Exception:
         return
     best = None
     for m in (ev.get('event', ev)).get('markets', []):
