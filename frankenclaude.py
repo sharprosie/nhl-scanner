@@ -7,7 +7,7 @@ Rules:
   NFL buy spots: lead 8+ with ball (last 8 min); lead 9+ without ball (last 4); lead 4-7 with ball (last 4); lead 8 without ball (last 4).
   College: lead 9+ with ball or 14+ without (last 8 min).  Never a lead of 3 or less, never above 97c.
   Ladder: $1 at fair-4c, $2 at fair-8c, $2 at fair-12c. Instant buy $5 if the price is fair-6c or better.
-  Early comeback (college, top division only): 75c+ pregame favorite down 7+ in the first half, price down 10c+ -> $5 ($8 if 15c+).
+  Early comeback (college; same-division games only, cross-division games skipped by every rule): 75c+ pregame favorite down 7+ in the first half, price down 10c+ -> $5 ($8 if 15c+).
   Clawback: if the account holds the trailing team and the leader is 95%+, use go-hard sizes.
   Go hard: when fair is 98%+ and the price is 8c+ under it, instant buy $10 and allow $20 for that game.
   Limits: $10 a game, $50 a week per league (Tue-Mon, Pacific). Every resting order counts as spent until its fill is known.
@@ -183,8 +183,8 @@ def _early(c, sp, key, g, ml, per, a, h, p, s, mem):
     """College early comeback (Oct 17 test, 2025 season, 83 games: +13%; +25% when the price fell 15c+):
     a 75c+ pregame favorite falls behind by 7+ in the first half -> buy the favorite once the price has dropped 10c+
     and the deficit has stood for 2 minutes. $5 ($8 if the price dropped 15c+), one buy per game."""
-    if sp != 'cfb' or g.get('fcs') or not ml or not ml[1] or not ml[2]:
-        return False                                                        # top division only (Oct 17: tested on FBS)
+    if sp != 'cfb' or g.get('cross') or not ml or not ml[1] or not ml[2]:
+        return False                                                        # Oct 17: same-division games only (never back a smaller school)
     slug, bid, ask = ml
     pre = s.setdefault('pre', {})
     if key not in pre:
@@ -238,7 +238,7 @@ def consider(g, ev):
     if per in (1, 2) and g.get('state') == 'in' and _early(c, sp, key, g, ml, per, a, h, p, s, mem):
         return True
     fair = None
-    if per == 4 and secs <= 480 and a != h and g.get('state') == 'in' and ml and ml[1] and ml[2]:
+    if per == 4 and secs <= 480 and a != h and g.get('state') == 'in' and ml and ml[1] and ml[2] and not g.get('cross'):
         ldr_away = a > h; ldr = g['a'] if ldr_away else g['h']
         if g.get('poss'):
             mem['poss'] = g['poss']

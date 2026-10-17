@@ -38,7 +38,7 @@ def note(msg):
 
 
 def games(sport, now, ahead=0):
-    path, extra, _ = SPORTS[sport]; seen = {}
+    path, extra, _ = SPORTS[sport]; seen = {}; grp = {}
     base = now.astimezone(ET).date()
     for d in {base, base - dt.timedelta(days=1)} | {base + dt.timedelta(days=k) for k in range(1, ahead + 1)}:
       for x in (extra if isinstance(extra, tuple) else (extra,)):
@@ -60,7 +60,11 @@ def games(sport, now, ahead=0):
                 start=dt.datetime.fromisoformat(ev['date'].replace('Z', '+00:00')), state=st['type']['state'],
                 period=st.get('period'), clock=st.get('displayClock'), sa=tm['away'].get('score'), sh=tm['home'].get('score'),
                 poss=poss, sit=(sit.get('shortDownDistanceText', '') + ' ' + str(sit.get('yardLine', ''))).strip(),
-                fcs=(x == '&groups=81'))                                 # lower division (FCS) college game
+                fcs=False, cross=False)
+            grp.setdefault(ev['id'], set()).add(x)
+    for gid, gs in grp.items():                                         # Oct 17: top-division list ('80') vs lower-division list ('81')
+        seen[gid]['fcs'] = gs == {'&groups=81'}                          # lower-division game (both teams lower division)
+        seen[gid]['cross'] = gs == {'&groups=80', '&groups=81'}          # top-division school vs lower-division school
     return seen
 
 
