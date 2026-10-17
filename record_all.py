@@ -15,7 +15,7 @@ ET, PT = ZoneInfo('America/New_York'), ZoneInfo('America/Los_Angeles')
 POLL = 5          # seconds between checks; slows down automatically on big slates (stay under ~10 requests/second)
 SPORTS = {   # name: (ESPN path, extra query, Polymarket slug prefix)
     'nfl': ('football/nfl', '', 'nfl'),
-    'cfb': ('football/college-football', '&groups=80', 'cfb'),
+    'cfb': ('football/college-football', ('&groups=80', '&groups=81'), 'cfb'),   # FBS + FCS: every college game Polymarket might list
     'nhl': ('hockey/nhl', '', 'nhl'),
     'nba': ('basketball/nba', '', 'nba'),
 }
@@ -41,8 +41,9 @@ def games(sport, now, ahead=0):
     path, extra, _ = SPORTS[sport]; seen = {}
     base = now.astimezone(ET).date()
     for d in {base, base - dt.timedelta(days=1)} | {base + dt.timedelta(days=k) for k in range(1, ahead + 1)}:
+      for x in (extra if isinstance(extra, tuple) else (extra,)):
         try:
-            sb = get(ESPN.format(p=path, d=d.strftime('%Y%m%d'), x=extra, n=int(time.time())))
+            sb = get(ESPN.format(p=path, d=d.strftime('%Y%m%d'), x=x, n=int(time.time())))
         except Exception as e:
             note(f'{sport} scoreboard error {e}'); continue
         for ev in sb.get('events', []):
