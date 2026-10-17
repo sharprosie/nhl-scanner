@@ -7,6 +7,7 @@ Rules:
   NFL buy spots: lead 8+ with ball (last 8 min); lead 9+ without ball (last 4); lead 4-7 with ball (last 4); lead 8 without ball (last 4).
   College: lead 9+ with ball or 14+ without (last 8 min).  Never a lead of 3 or less, never above 97c.
   Ladder: $1 at fair-4c, $2 at fair-8c, $2 at fair-12c. Instant buy $5 if the price is fair-6c or better.
+  Go hard: when fair is 98%+ and the price is 8c+ under it, instant buy $10 and allow $20 for that game.
   Limits: $10 a game, $50 a week per league (Tue-Mon, Pacific). Every resting order counts as spent until its fill is known.
   One phone alert at $40 of $50 for a league, one at the cap. Holds to the end (no selling yet).
 Nothing about trades is printed (public repo). State lives in bot_state/ (Actions cache)."""
@@ -18,6 +19,7 @@ HERE = os.path.dirname(os.path.abspath(__file__)); SD = os.path.join(HERE, 'bot_
 PT = ZoneInfo('America/Los_Angeles')
 CFG = dict(live=True, max_price=0.97, instant_gap=0.06, ladder=[[0.04, 1.0], [0.08, 2.0], [0.12, 2.0]], stake=5.0,
            news_drop=0.04, cooldown=60, alert_at=40.0,
+           big_fair=0.98, big_gap=0.08, big_stake=10.0, big_game_cap=20.0,   # 'go hard' tier (Oct 16): near-certain + big discount
            nfl=dict(game_cap=10.0, week_cap=50.0), cfb=dict(game_cap=10.0, week_cap=50.0))
 # NFL 2010-25, 4th quarter: leader's real win chance by (lead bucket, has ball) for 4-8 min / 2-4 min / under 2 min left
 TABLE = {('4-7', 1): (.838, .878, .974), ('4-7', 0): (.735, .737, .816), ('8', 1): (.934, .955, .985), ('8', 0): (.863, .892, .936),
@@ -180,14 +182,15 @@ def consider(g, ev):
             return True
         mem['sig'] = sig
     week_left = c[sp]['week_cap'] - _week_spent(sp, s)
-    game_left = c[sp]['game_cap'] - _game_used(s, key)
+    big = fair >= c['big_fair'] and cost <= fair - c['big_gap']           # near-certain AND a big discount: go hard
+    game_left = (c['big_game_cap'] if fair >= c['big_fair'] else c[sp]['game_cap']) - _game_used(s, key)
     room = min(week_left, game_left)
     if room < 1:
         return True
     # 1) Instant buy when the price already lags fair by 6c+
     if cost <= min(fair - c['instant_gap'], c['max_price']) and not mem.get('took') == sig:
         try:
-            r = pmtrade.buy(slug, ldr_away, min(fair - c['instant_gap'], c['max_price']), min(c['stake'], room), size_price=cost)
+            r = pmtrade.buy(slug, ldr_away, min(fair - c['instant_gap'], c['max_price']), min(c['big_stake'] if big else c['stake'], room), size_price=cost)
         except Exception:
             r = dict(ok=False)
         mem['took'] = sig
