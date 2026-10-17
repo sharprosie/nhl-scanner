@@ -93,6 +93,14 @@ def event(g):
     return None
 
 
+def pmtrade_amt(x):
+    x = x.get('value') if isinstance(x, dict) else x
+    try:
+        return float(x)
+    except (TypeError, ValueError):
+        return ''
+
+
 LAST = {}
 def rows(g, ev, ts):
     ev = ev.get('event', ev); out = []
