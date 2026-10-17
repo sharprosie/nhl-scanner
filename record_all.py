@@ -59,7 +59,8 @@ def games(sport, now, ahead=0):
                 hn=tm['home']['team'].get('shortDisplayName') or tm['home']['team'].get('displayName', ''),
                 start=dt.datetime.fromisoformat(ev['date'].replace('Z', '+00:00')), state=st['type']['state'],
                 period=st.get('period'), clock=st.get('displayClock'), sa=tm['away'].get('score'), sh=tm['home'].get('score'),
-                poss=poss, sit=(sit.get('shortDownDistanceText', '') + ' ' + str(sit.get('yardLine', ''))).strip())
+                poss=poss, sit=(sit.get('shortDownDistanceText', '') + ' ' + str(sit.get('yardLine', ''))).strip(),
+                fcs=(x == '&groups=81'))                                 # lower division (FCS) college game
     return seen
 
 
