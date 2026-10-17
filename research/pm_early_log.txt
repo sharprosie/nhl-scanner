@@ -1,0 +1,37 @@
+events from tag listing: 1392
+0 games done 1 markets 0
+40 games done 41 markets 33
+80 games done 81 markets 73
+120 games done 121 markets 113
+160 games done 161 markets 153
+200 games done 201 markets 193
+240 games done 241 markets 233
+280 games done 281 markets 273
+320 games done 321 markets 313
+360 games done 361 markets 353
+400 games done 401 markets 393
+440 games done 441 markets 433
+480 games done 481 markets 473
+520 games done 521 markets 513
+560 games done 561 markets 553
+600 games done 601 markets 593
+640 games done 641 markets 633
+680 games done 681 markets 673
+720 games done 721 markets 713
+760 games done 761 markets 753
+800 games done 801 markets 793
+840 games done 841 markets 833
+880 games done 881 markets 873
+920 games done 921 markets 913
+960 games done 961 markets 953
+1000 games done 1001 markets 987
+1040 games done 1041 markets 1023
+1080 games done 1081 markets 1063
+1120 games done 1121 markets 1103
+1160 games done 1161 markets 1143
+1200 games done 1201 markets 1183
+1240 games done 1241 markets 1223
+1280 games done 1281 markets 1263
+1320 games done 1321 markets 1303
+1360 games done 1361 markets 1343
+DONE games 1392 markets 1374 with history 1374
