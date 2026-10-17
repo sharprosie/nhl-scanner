@@ -1,3 +1,10 @@
-Alabama (333) FCS? True | Ohio State (194) FCS? True
-Yale (43) FCS? True | Rhode Island (227) FCS? True | Montana (149) FCS? True
-FCS teams found: 500
+teams 206
+conferenceIds [('5', 18), ('8', 16), ('1', 16), ('4', 16), ('151', 14), ('37', 14), ('15', 13), ('48', 11), ('17', 10), ('12', 10), ('20', 10), ('9', 8), ('179', 7), ('31', 7), ('29', 6), ('177', 6), ('30', 6), ('25', 5), ('27', 4), ('21', 4), ('24', 3), ('18', 2)]
+ALA ('8', 'Alabama Crimson Tide')
+OSU ('5', 'Ohio State Buckeyes')
+YALE None
+URI ('48', 'Rhode Island Rams')
+MONT None
+ND ('18', 'Notre Dame Fighting Irish')
+UCONN None
+ARMY ('151', 'Army Black Knights')
