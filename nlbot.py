@@ -4,7 +4,8 @@ Rules (bot.json can turn it off or change sizes):
   - skips if less than ~$1 is for sale at the price, or if we already hold the other team in this game
   - the gap must show on two checks in a row (~2 seconds apart) with the same score
   - if the price just fell 10c+ in the last minute, wait until that drop is a minute old (same reason)
-  - $2 a trade, $4 a game, $10 a night; one buy per market per night; buy-only, immediate-or-cancel
+  - go hard (Oct 16): real chance 98%+ AND 8c+ under it -> $6 a trade, $10 a game, nightly room up to $20
+  - otherwise $2 a trade, $4 a game, $12 a night; one buy per market per night; buy-only, immediate-or-cancel
   - stops for the night after 3 losses in a row, $8 net loss, 3 order errors, or a rejected key
 Public repo rule: nothing about trades is printed or committed. State lives in bot_state/ (Actions cache only);
 each trade goes to your phone."""
@@ -19,7 +20,7 @@ import pmtrade
 HERE = os.path.dirname(os.path.abspath(__file__)); SD = os.path.join(HERE, 'bot_state'); os.makedirs(SD, exist_ok=True)
 PT = ZoneInfo('America/Los_Angeles')
 DEF = dict(live=False, per_trade=2.0, per_game=4.0, per_night=10.0, min_gap=0.06, gap_early=0.08, gap_mid=0.06, gap_late=0.05, min_fill=1.0, min_fair=0.85, max_cost=0.97,
-           hold_secs=1.5, poll_secs=2, drop=0.10, drop_wait=60, max_losses_row=3, max_night_loss=8.0, max_errors=3)
+           hold_secs=1.5, poll_secs=2, drop=0.10, big_fair=0.98, big_gap=0.08, big_trade=6.0, big_game=10.0, big_night=20.0, drop_wait=60, max_losses_row=3, max_night_loss=8.0, max_errors=3)
 
 
 class Bot:
@@ -122,7 +123,11 @@ class Bot:
             return True                                          # already bought this one tonight
         spent_game = sum(t['spent'] for t in T if t['game'] == game)
         spent_night = sum(t['spent'] for t in T)
-        dollars = min(c['per_trade'], c['per_game'] - spent_game, c['per_night'] - spent_night)
+        big = fair >= c['big_fair'] and gap >= c['big_gap']       # Oct 16 'go hard': near-certain AND 8c+ cheap
+        if big:
+            dollars = min(c['big_trade'], c['big_game'] - spent_game, c['big_night'] - spent_night)
+        else:
+            dollars = min(c['per_trade'], c['per_game'] - spent_game, c['per_night'] - spent_night)
         if dollars < 0.5:
             return False
         cap = min(fair - need, c['max_cost'])
@@ -151,7 +156,7 @@ class Bot:
                       filled=r['filled'], spent=round(r['spent'], 2), avg=round(r['avg_cost'], 3), order=r.get('order_id')))
         self.save()
         self.ping(f'Bot bought: {label}', f"{score}. {label} at {r['avg_cost']*100:.0f}c, ${r['spent']:.2f} "
-                                          f"(real chance {fair*100:.0f}%). Tonight: ${spent_night + r['spent']:.2f} of ${c['per_night']:.0f}.")
+                                          f"(real chance {fair*100:.0f}%). Tonight: ${spent_night + r['spent']:.2f}.")
         return True
 
     def summary(self):
