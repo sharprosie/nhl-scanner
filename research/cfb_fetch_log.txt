@@ -1,0 +1,16 @@
+tag cfb events so far 829
+tag ncaaf events so far 829
+tag college-football events so far 829
+tag ncaa-football events so far 829
+0 events done 0
+100 events done 98
+200 events done 198
+300 events done 298
+400 events done 398
+500 events done 498
+600 events done 598
+700 events done 698
+800 events done 798
+PM DONE 826 games
+espn games 958
+ESPN DONE 958 games; 947 with wall clock
