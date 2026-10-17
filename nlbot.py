@@ -1,11 +1,13 @@
 """In-game near-lock BOT: buys a near-lock automatically when the scanner sees it, with hard limits.
 Rules (bot.json can turn it off or change sizes):
   - moneylines and puck lines only; real chance 85%+; price under the real chance by 8c (20-10 min left), 6c (10-5), 5c (<5); never over 97c
-  - skips if less than ~$1 is for sale at the price, or if we already hold the other team in this game
+  - skips if less than ~$1 is for sale at the price
   - the gap must show on two checks in a row (~2 seconds apart) with the same score
   - if the price just fell 10c+ in the last minute, wait until that drop is a minute old (same reason)
   - go hard (Oct 16): real chance 98%+ AND 8c+ under it -> $8 a trade, $12 a game (same $40 a night)
   - otherwise $4 a trade, $8 a game; $40 a night for everything (Oct 16) one buy per market per night; buy-only, immediate-or-cancel
+  - hedge (Oct 16): if we hold the other team (a losing pick) and this side is 95%+ and passes the normal price gap,
+    buy it at go-hard size to recover part of the loss; never against our own pick below 95%
   - stops for the night after 3 losses in a row, $20 net loss, 3 order errors, or a rejected key
 Public repo rule: nothing about trades is printed or committed. State lives in bot_state/ (Actions cache only);
 each trade goes to your phone."""
@@ -20,7 +22,7 @@ import pmtrade
 HERE = os.path.dirname(os.path.abspath(__file__)); SD = os.path.join(HERE, 'bot_state'); os.makedirs(SD, exist_ok=True)
 PT = ZoneInfo('America/Los_Angeles')
 DEF = dict(live=False, per_trade=2.0, per_game=4.0, per_night=10.0, min_gap=0.06, gap_early=0.08, gap_mid=0.06, gap_late=0.05, min_fill=1.0, min_fair=0.85, max_cost=0.97,
-           hold_secs=1.5, poll_secs=2, drop=0.10, big_fair=0.98, big_gap=0.08, big_trade=6.0, big_game=10.0, big_night=20.0, drop_wait=60, max_losses_row=3, max_night_loss=8.0, max_errors=3)
+           hold_secs=1.5, poll_secs=2, drop=0.10, big_fair=0.98, big_gap=0.08, hedge_fair=0.95, big_trade=6.0, big_game=10.0, big_night=20.0, drop_wait=60, max_losses_row=3, max_night_loss=8.0, max_errors=3)
 
 
 class Bot:
@@ -84,7 +86,7 @@ class Bot:
         try:
             P = pmtrade.call('GET', '/v1/portfolio/positions').get('positions', {})
         except Exception:
-            return True                              # can't check -> don't risk it
+            return 'error'                           # can't check -> don't risk it
         key = '-'.join(slug.split('-')[1:7])         # nhl-away-home-yyyy-mm-dd
         a, h = key.split('-')[1], key.split('-')[2]
         t = team.lower()
@@ -123,7 +125,12 @@ class Bot:
             return True                                          # already bought this one tonight
         spent_game = sum(t['spent'] for t in T if t['game'] == game)
         spent_night = sum(t['spent'] for t in T)
-        big = fair >= c['big_fair'] and gap >= c['big_gap']       # Oct 16 'go hard': near-certain AND 8c+ cheap
+        own = self.against_own(m['slug'], team)
+        if own == 'error':
+            return False
+        if own and fair < c['hedge_fair']:
+            return False                                         # never bet against our own pick unless it's a strong near-lock
+        big = (fair >= c['big_fair'] and gap >= c['big_gap']) or bool(own)   # Oct 16: go hard, or hedge a losing pick at a discount
         if big:
             dollars = min(c['big_trade'], c['big_game'] - spent_game, c['big_night'] - spent_night)
         else:
@@ -138,8 +145,6 @@ class Bot:
                 return False
         except Exception:
             pass
-        if self.against_own(m['slug'], team):
-            return False
         try:
             r = pmtrade.buy(m['slug'], side == 'long', cap, dollars, size_price=cost)
         except Exception as e:
@@ -155,7 +160,7 @@ class Bot:
                       team=team, handicap=handicap, label=label, fair=round(fair, 3), cap=round(cap, 3),
                       filled=r['filled'], spent=round(r['spent'], 2), avg=round(r['avg_cost'], 3), order=r.get('order_id')))
         self.save()
-        self.ping(f'Bot bought: {label}', f"{score}. {label} at {r['avg_cost']*100:.0f}c, ${r['spent']:.2f} "
+        self.ping(f"Bot bought: {label}{' (hedge on our losing pick)' if own else ''}", f"{score}. {label} at {r['avg_cost']*100:.0f}c, ${r['spent']:.2f} "
                                           f"(real chance {fair*100:.0f}%). Tonight: ${spent_night + r['spent']:.2f}.")
         return True
 
