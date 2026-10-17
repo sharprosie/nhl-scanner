@@ -22,3 +22,23 @@
 2026-10-15T20:55:19-07:00 finished
 2026-10-15T21:46:53-07:00 no live games; next start 2026-10-16 23:00:00+00:00; stopping
 2026-10-15T21:46:53-07:00 finished
+2026-10-16T15:12:06-07:00 cfb scoreboard error <urlopen error [Errno 104] Connection reset by peer>
+2026-10-16T16:10:52-07:00 MIL@IND: nba-mil-ind-2026-10-16
+2026-10-16T16:10:58-07:00 BOS@PHI: nba-bos-phi-2026-10-16
+2026-10-16T16:11:44-07:00 MIA@ORL: nba-mia-orl-2026-10-16
+2026-10-16T16:13:06-07:00 TOR@DET: nba-tor-det-2026-10-16
+2026-10-16T16:36:02-07:00 MEM@TULN: cfb-mphs-tulane-2026-10-16 (search)
+2026-10-16T16:46:05-07:00 nhl scoreboard error <urlopen error [Errno 104] Connection reset by peer>
+2026-10-16T16:46:05-07:00 nba scoreboard error <urlopen error [Errno 104] Connection reset by peer>
+2026-10-16T17:05:51-07:00 WASH@PUR: cfb-wash-pur-2026-10-16
+2026-10-16T17:10:38-07:00 ATL@DAL: nba-atl-dal-2026-10-16
+2026-10-16T17:10:38-07:00 CHA@MEM: nba-cha-mem-2026-10-16
+2026-10-16T17:10:44-07:00 MIN@CHI: nba-min-chi-2026-10-16
+2026-10-16T17:11:21-07:00 SAC@SA: nba-sac-sa-2026-10-16
+2026-10-16T17:33:25-07:00 cfb scoreboard error <urlopen error [Errno 104] Connection reset by peer>
+2026-10-16T18:09:05-07:00 PIT@COL: nhl-pit-col-2026-10-16
+2026-10-16T18:23:17-07:00 cfb scoreboard error <urlopen error [Errno 104] Connection reset by peer>
+2026-10-16T19:06:09-07:00 BOS@ANA: nhl-bos-ana-2026-10-16
+2026-10-16T19:10:44-07:00 POR@GS: nba-por-gs-2026-10-16
+2026-10-16T19:47:51-07:00 DEN@LAL: nba-den-lal-2026-10-16
+2026-10-16T20:57:01-07:00 finished
