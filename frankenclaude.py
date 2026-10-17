@@ -7,6 +7,7 @@ Rules:
   NFL buy spots: lead 8+ with ball (last 8 min); lead 9+ without ball (last 4); lead 4-7 with ball (last 4); lead 8 without ball (last 4).
   College: lead 9+ with ball or 14+ without (last 8 min).  Never a lead of 3 or less, never above 97c.
   Ladder: $1 at fair-4c, $2 at fair-8c, $2 at fair-12c. Instant buy $5 if the price is fair-6c or better.
+  Early comeback (college): 75c+ pregame favorite down 7+ in the first half, price down 10c+ -> $5 ($8 if 15c+).
   Clawback: if the account holds the trailing team and the leader is 95%+, use go-hard sizes.
   Go hard: when fair is 98%+ and the price is 8c+ under it, instant buy $10 and allow $20 for that game.
   Limits: $10 a game, $50 a week per league (Tue-Mon, Pacific). Every resting order counts as spent until its fill is known.
@@ -20,7 +21,8 @@ HERE = os.path.dirname(os.path.abspath(__file__)); SD = os.path.join(HERE, 'bot_
 PT = ZoneInfo('America/Los_Angeles')
 CFG = dict(live=True, max_price=0.97, instant_gap=0.06, ladder=[[0.04, 1.0], [0.08, 2.0], [0.12, 2.0]], stake=5.0,
            news_drop=0.04, cooldown=60, alert_at=40.0,
-           big_fair=0.98, big_gap=0.08, big_stake=10.0, big_game_cap=20.0, hedge_fair=0.95,   # 'go hard' tier (Oct 16): near-certain + big discount
+           big_fair=0.98, big_gap=0.08, big_stake=10.0, big_game_cap=20.0, hedge_fair=0.95,
+           ec_min_pre=0.75, ec_drop=0.10, ec_big_drop=0.15, ec_stake=5.0, ec_big=8.0, ec_wait=120,   # college early comeback (Oct 17)   # 'go hard' tier (Oct 16): near-certain + big discount
            nfl=dict(game_cap=10.0, week_cap=50.0), cfb=dict(game_cap=10.0, week_cap=50.0))
 # NFL 2010-25, 4th quarter: leader's real win chance by (lead bucket, has ball) for 4-8 min / 2-4 min / under 2 min left
 TABLE = {('4-7', 1): (.838, .878, .974), ('4-7', 0): (.735, .737, .816), ('8', 1): (.934, .955, .985), ('8', 0): (.863, .892, .936),
@@ -162,6 +164,46 @@ def _game_used(s, key):
     return s['games'].get(key, 0.0) + sum(o['dollars'] for o in s['orders'].get(key, []))
 
 
+def _early(c, sp, key, g, ml, per, a, h, p, s, mem):
+    """College early comeback (Oct 17 test, 2025 season, 83 games: +13%; +25% when the price fell 15c+):
+    a 75c+ pregame favorite falls behind by 7+ in the first half -> buy the favorite once the price has dropped 10c+
+    and the deficit has stood for 2 minutes. $5 ($8 if the price dropped 15c+), one buy per game."""
+    if sp != 'cfb' or not ml or not ml[1] or not ml[2]:
+        return False
+    slug, bid, ask = ml
+    pre = s.setdefault('pre', {})
+    if key not in pre:
+        if per == 1 and a == 0 and h == 0:
+            pre[key] = round((bid + ask) / 2, 4); _save(p, s)               # away team's chance at kickoff
+        return False
+    if per not in (1, 2) or key in s.setdefault('ec', []):
+        return False
+    pa = pre[key]; fav_away = pa >= 0.5; favp = pa if fav_away else 1 - pa
+    deficit = (h - a) if fav_away else (a - h)
+    if favp < c['ec_min_pre'] or deficit < 7:
+        mem.pop('ec_sig', None); return False
+    cost = ask if fav_away else round(1 - bid, 4)
+    drop = favp - cost
+    if drop < c['ec_drop']:
+        return True                                                         # watch closely
+    if mem.get('ec_sig') != (a, h):
+        mem['ec_sig'] = (a, h); mem['ec_t'] = time.time(); return True
+    if time.time() - mem['ec_t'] < c['ec_wait']:
+        return True
+    d = min(c['ec_big'] if drop >= c['ec_big_drop'] else c['ec_stake'],
+            c[sp]['week_cap'] - _week_spent(sp, s), c[sp]['game_cap'] - _game_used(s, key))
+    s['ec'].append(key)
+    if d >= 1:
+        try:
+            r = pmtrade.buy(slug, fav_away, min(cost + 0.01, favp - c['ec_drop'] + 0.01), d, size_price=cost)
+        except Exception:
+            r = dict(ok=False)
+        if r.get('ok'):
+            s['spent'][sp] = s['spent'].get(sp, 0.0) + r['spent']; s['games'][key] = s['games'].get(key, 0.0) + r['spent']
+    _save(p, s); _alerts(c, sp, s)
+    return False
+
+
 def consider(g, ev):
     """Called by record_all.py for each live game. Returns True while the game is in a buy spot (so it gets checked fast)."""
     c = _cfg(); sp = g.get('sport')
@@ -175,6 +217,8 @@ def consider(g, ev):
     except ValueError:
         return False
     ml = _moneyline(ev)
+    if per in (1, 2) and g.get('state') == 'in' and _early(c, sp, key, g, ml, per, a, h, p, s, mem):
+        return True
     fair = None
     if per == 4 and secs <= 480 and a != h and g.get('state') == 'in' and ml and ml[1] and ml[2]:
         ldr_away = a > h; ldr = g['a'] if ldr_away else g['h']
