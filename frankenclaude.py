@@ -78,6 +78,18 @@ def _week_spent(sp, s_today):
     return tot
 
 
+def _note(title, msg):
+    """Quiet phone notice for each buy (Oct 17: Stephen wants to know, without buzzing)."""
+    t = os.environ.get('NTFY_TOPIC', '').strip()
+    if not t:
+        return
+    try:
+        urllib.request.urlopen(urllib.request.Request(f'https://ntfy.sh/{t}', data=msg.encode(),
+                               headers={'Title': title, 'Priority': 'low', 'Tags': 'football'}), timeout=20)
+    except Exception:
+        pass
+
+
 def _ping(title, msg):
     t = os.environ.get('NTFY_TOPIC', '').strip()
     if not t:
@@ -158,6 +170,9 @@ def _close(s, key):
             used = min(o['dollars'], q * c)
         s['spent'][o['sport']] = s['spent'].get(o['sport'], 0.0) + used
         s['games'][key] = s['games'].get(key, 0.0) + used
+        if used > 0.01:
+            _note('FrankenClaude: standing order filled', f"{key.split('|')[1]}: ${used:.2f} at {o['cost']*100:.0f}c"
+                  + (' (fill not readable, counted as full)' if f is None else ''))
 
 
 def _game_used(s, key):
@@ -200,6 +215,9 @@ def _early(c, sp, key, g, ml, per, a, h, p, s, mem):
             r = dict(ok=False)
         if r.get('ok'):
             s['spent'][sp] = s['spent'].get(sp, 0.0) + r['spent']; s['games'][key] = s['games'].get(key, 0.0) + r['spent']
+            tm = g['a'] if fav_away else g['h']
+            _note(f'FrankenClaude: {tm} (early comeback)', f"{g['a']} {a}-{h} {g['h']}. Bought {tm} to win at {r.get('avg_cost', cost)*100:.0f}c, "
+                  f"${r['spent']:.2f} (was {favp*100:.0f}c at kickoff).")
     _save(p, s); _alerts(c, sp, s)
     return False
 
@@ -265,6 +283,8 @@ def consider(g, ev):
         mem['took'] = sig
         if r.get('ok'):
             s['spent'][sp] = s['spent'].get(sp, 0.0) + r['spent']; s['games'][key] = s['games'].get(key, 0.0) + r['spent']
+            _note(f"FrankenClaude: {ldr}{' (clawback)' if hedge else ''}", f"{g['a']} {a}-{h} {g['h']}, {g.get('clock')} left. Bought {ldr} to win at "
+                  f"{(r.get('avg_cost') or cost)*100:.0f}c, ${r['spent']:.2f} (real chance {fair*100:.0f}%).")
             _save(p, s); _alerts(c, sp, s)
             room -= r['spent']
     # 2) Ladder of resting orders under fair (posted once per game situation)
