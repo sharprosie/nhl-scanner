@@ -79,13 +79,13 @@ def _week_spent(sp, s_today):
 
 
 def _note(title, msg):
-    """Quiet phone notice for each buy (Oct 17: Stephen wants to know, without buzzing)."""
+    """Phone notice for each buy, normal sound (Oct 17: Stephen wants a sound, not a loud alert)."""
     t = os.environ.get('NTFY_TOPIC', '').strip()
     if not t:
         return
     try:
         urllib.request.urlopen(urllib.request.Request(f'https://ntfy.sh/{t}', data=msg.encode(),
-                               headers={'Title': title, 'Priority': 'low', 'Tags': 'football'}), timeout=20)
+                               headers={'Title': title, 'Priority': 'default', 'Tags': 'football'}), timeout=20)
     except Exception:
         pass
 
