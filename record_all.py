@@ -123,8 +123,33 @@ def ping(title, msg, prio='default'):
         note(f'ping failed {e}')
 
 
+HOT, _hot_t = {}, [0.0]
+def hot_check(force=False):
+    """FrankenClaude: re-check games that are in a buy spot about every 2 seconds (fresh ESPN state + fresh Polymarket prices)."""
+    if not HOT or (not force and time.time() - _hot_t[0] < 2):
+        return
+    _hot_t[0] = time.time()
+    try:
+        import frankenclaude
+        now = dt.datetime.now(dt.timezone.utc)
+        for sp in {g['sport'] for g in HOT.values()}:
+            G = games(sp, now)
+            for gid in [k for k, g in HOT.items() if g['sport'] == sp]:
+                g = G.get(gid)
+                ev = event(g) if g else None
+                if not g or ev is None or not frankenclaude.consider(g, ev):
+                    HOT.pop(gid, None)
+    except Exception:
+        pass
+
+
 def main(max_hours=5.8, probe=False, sports=None):
     sports = sports or list(SPORTS)
+    if not probe:
+        try:
+            import frankenclaude; frankenclaude.cleanup()          # leftovers from a run that died
+        except Exception:
+            pass
     STATS = {sp: dict(live=set(), matched=set(), rows=0) for sp in sports}
     end = time.time() + max_hours * 3600
     while time.time() < end:
@@ -157,6 +182,15 @@ def main(max_hours=5.8, probe=False, sports=None):
                     import fbunder; fbunder.consider(g, ev)
                 except Exception:
                     pass
+                try:
+                    import frankenclaude
+                    if frankenclaude.consider(g, ev):
+                        HOT[g['id']] = g
+                    else:
+                        HOT.pop(g['id'], None)
+                except Exception:
+                    pass
+                hot_check()
                 r = rows(g, ev, ts); STATS[g['sport']]['rows'] += len(r)
                 path = os.path.join(OUT, f"rec_{g['sport']}_{dt.datetime.now(PT).strftime('%Y-%m-%d')}.csv.gz")
                 new = not os.path.exists(path)
@@ -170,7 +204,15 @@ def main(max_hours=5.8, probe=False, sports=None):
                 note(f"{g['a']}@{g['h']}: error {e}")
         if probe:
             note(f'PROBE rows by sport: {counts}; games: {[g["sport"] + " " + g["a"] + "@" + g["h"] for g in live]}'); break
-        time.sleep(max(POLL, len(live) / 10.0))
+        pause = time.time() + max(POLL, len(live) / 10.0)
+        while time.time() < pause:
+            hot_check(force=True) if HOT else None
+            time.sleep(2 if HOT else max(0.5, pause - time.time()))
+    if not probe:
+        try:
+            import frankenclaude; frankenclaude.cleanup()          # never leave resting orders behind
+        except Exception:
+            pass
     note('finished')
     seen = {sp: v for sp, v in STATS.items() if v['live']}
     if seen and not probe:

@@ -21,5 +21,16 @@
     "cfb": {
       "week_cap": 20.0
     }
+  },
+  "frankenclaude": {
+    "live": true,
+    "nfl": {
+      "game_cap": 10.0,
+      "week_cap": 50.0
+    },
+    "cfb": {
+      "game_cap": 10.0,
+      "week_cap": 50.0
+    }
   }
 }

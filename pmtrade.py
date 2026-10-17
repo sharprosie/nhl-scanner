@@ -75,3 +75,46 @@ def buy(slug, long_side, max_cost, dollars, tick=0.01, dry=False, size_price=Non
     rej = next((e.get('orderRejectReason') or e.get('text') for e in ex if e.get('orderRejectReason')), None)
     return dict(ok=filled > 0, order_id=r.get('id'), qty=qty, filled=filled,
                 avg_cost=(spent / filled) if filled else None, spent=spent, reason='' if filled else (rej or 'no fill at or under cap'))
+
+
+# --- Standing (good-till-cancel) orders, added Oct 16 2026 for FrankenClaude ---
+# Endpoints from docs.polymarket.us: POST /v1/orders (tif GOOD_TILL_CANCEL), POST /v1/order/{id}/cancel {marketSlug},
+# GET /v1/order/{id}. The filled-amount field name on GET is not documented; fill() returns None when it can't read it,
+# and the caller then treats the whole order as filled (never under-counts spending).
+def post(slug, long_side, cost, dollars, tick=0.01):
+    """Rest a buy order for one side at `cost` (0-1) for about `dollars`. Returns dict(ok, order_id, qty, cost)."""
+    cost = math.floor(cost / tick + 1e-9) * tick
+    qty = math.floor(100 * dollars / (cost + 0.02)) / 100
+    if qty < 1 or not (0.02 <= cost <= 0.97):
+        return dict(ok=False, reason='size/price out of range')
+    qty = math.floor(qty)                                               # whole contracts: safest for resting orders
+    px = cost if long_side else 1 - cost
+    body = dict(marketSlug=slug, type='ORDER_TYPE_LIMIT', price=dict(value=f'{px:.3f}', currency='USD'), quantity=qty,
+                tif='TIME_IN_FORCE_GOOD_TILL_CANCEL',
+                intent='ORDER_INTENT_BUY_LONG' if long_side else 'ORDER_INTENT_BUY_SHORT',
+                manualOrderIndicator='MANUAL_ORDER_INDICATOR_AUTOMATIC')
+    r = call('POST', '/v1/orders', body)
+    return dict(ok=bool(r.get('id')), order_id=r.get('id'), qty=qty, cost=cost)
+
+
+def cancel(slug, order_id):
+    try:
+        call('POST', f'/v1/order/{order_id}/cancel', dict(marketSlug=slug))
+        return True
+    except Exception:
+        return False
+
+
+def fill(order_id):
+    """(filled_contracts, avg_long_price or None) if readable, else None."""
+    try:
+        r = call('GET', f'/v1/order/{order_id}')
+    except Exception:
+        return None
+    o = r.get('order', r) if isinstance(r, dict) else {}
+    for k in ('cumQuantity', 'filledQuantity', 'cumQty'):
+        if k in o:
+            q = amt(o[k])
+            if q is not None:
+                return q, amt(o.get('avgPx'))
+    return None
