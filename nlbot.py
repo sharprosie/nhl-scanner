@@ -160,6 +160,10 @@ class Bot:
                       team=team, handicap=handicap, label=label, fair=round(fair, 3), cap=round(cap, 3),
                       filled=r['filled'], spent=round(r['spent'], 2), avg=round(r['avg_cost'], 3), order=r.get('order_id')))
         self.save()
+        night = spent_night + r['spent']
+        if night >= 0.8 * c['per_night'] and not self.s.get('near_cap'):
+            self.s['near_cap'] = 1; self.save()
+            self.ping('Hockey bot near tonight\'s limit', f"${night:.2f} of ${c['per_night']:.0f} used tonight.", 'default')
         self.ping(f"Bot bought: {label}{' (hedge on our losing pick)' if own else ''}", f"{score}. {label} at {r['avg_cost']*100:.0f}c, ${r['spent']:.2f} "
                                           f"(real chance {fair*100:.0f}%). Tonight: ${spent_night + r['spent']:.2f}.")
         return True
