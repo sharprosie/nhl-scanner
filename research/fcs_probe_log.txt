@@ -1,0 +1,3 @@
+Alabama (333) FCS? True | Ohio State (194) FCS? True
+Yale (43) FCS? True | Rhode Island (227) FCS? True | Montana (149) FCS? True
+FCS teams found: 500
