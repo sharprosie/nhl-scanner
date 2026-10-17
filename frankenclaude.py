@@ -117,10 +117,13 @@ def _alerts(c, sp, s):
 def _fair(sp, lead, ball, secs):
     if lead < 4:
         return None
-    if sp == 'nfl':
-        ok = (lead >= 8 and ball) or (lead >= 9 and secs <= 240) or (4 <= lead <= 7 and ball and secs <= 240) or (lead == 8 and secs <= 240)
-    else:
-        ok = (lead >= 9 and ball) or lead >= 14
+    if sp == 'cfb':
+        # Oct 17 college 4th-quarter table (2025 season, Polymarket prices after Q4 scores): leads of 11-16 won ~96%,
+        # 17+ ~98%, while Polymarket priced them ~90-93c. Whole 4th quarter, possession doesn't matter.
+        if lead < 11 or secs > 900:
+            return None
+        return 0.96 if lead <= 16 else 0.98
+    ok = (lead >= 8 and ball) or (lead >= 9 and secs <= 240) or (4 <= lead <= 7 and ball and secs <= 240) or (lead == 8 and secs <= 240)
     if not ok:
         return None
     b = '4-7' if lead <= 7 else '8' if lead == 8 else '9-14' if lead <= 14 else '15'
@@ -239,7 +242,7 @@ def consider(g, ev):
     if per in (1, 2) and g.get('state') == 'in' and _early(c, sp, key, g, ml, per, a, h, p, s, mem):
         return True
     fair = None
-    if per == 4 and secs <= 480 and a != h and g.get('state') == 'in' and ml and ml[1] and ml[2] and not g.get('cross'):
+    if per == 4 and secs <= (900 if sp == 'cfb' else 480) and a != h and g.get('state') == 'in' and ml and ml[1] and ml[2] and not g.get('cross'):
         ldr_away = a > h; ldr = g['a'] if ldr_away else g['h']
         if g.get('poss'):
             mem['poss'] = g['poss']
@@ -270,15 +273,16 @@ def consider(g, ev):
         mem['sig'] = sig
     week_left = c[sp]['week_cap'] - _week_spent(sp, s)
     hedge = fair >= c['hedge_fair'] and _holds_other(slug, ldr_away)      # clawback: we hold the trailing team
-    big = (fair >= c['big_fair'] and cost <= fair - c['big_gap']) or hedge  # near-certain + big discount, or clawback
-    game_left = (c['big_game_cap'] if (fair >= c['big_fair'] or hedge) else c[sp]['game_cap']) - _game_used(s, key)
+    big = ((fair >= c['big_fair'] or sp == 'cfb') and cost <= fair - c['big_gap']) or hedge  # big discount (college: any Q4 table spot), or clawback
+    game_left = (c['big_game_cap'] if (big or hedge) else c[sp]['game_cap']) - _game_used(s, key)
     room = min(week_left, game_left)
     if room < 1:
         return True
     # 1) Instant buy when the price already lags fair by 6c+
-    if cost <= min(fair - c['instant_gap'], c['max_price']) and not mem.get('took') == sig:
+    gap_i = 0.05 if sp == 'cfb' else c['instant_gap']                       # college: buy at 5c+ under fair (Oct 17)
+    if cost <= min(fair - gap_i, c['max_price']) and not mem.get('took') == sig:
         try:
-            r = pmtrade.buy(slug, ldr_away, min(fair - c['instant_gap'], c['max_price']), min(c['big_stake'] if big else c['stake'], room), size_price=cost)
+            r = pmtrade.buy(slug, ldr_away, min(fair - gap_i, c['max_price']), min(c['big_stake'] if big else c['stake'], room), size_price=cost)
         except Exception:
             r = dict(ok=False)
         mem['took'] = sig
