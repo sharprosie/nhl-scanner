@@ -65,6 +65,8 @@ def games(sport, now, ahead=0):
     for gid, gs in grp.items():                                         # Oct 17: top-division list ('80') vs lower-division list ('81')
         seen[gid]['fcs'] = gs == {'&groups=81'}                          # lower-division game (both teams lower division)
         seen[gid]['cross'] = gs == {'&groups=80', '&groups=81'}          # top-division school vs lower-division school
+    if sport == 'cfb':                                                  # Oct 17: Stephen dropped lower-division (Ivy etc.) games entirely
+        seen = {k: v for k, v in seen.items() if not v.get('fcs')}
     return seen
 
 
