@@ -47,3 +47,36 @@
 2026-10-16T21:03:29-07:00 DEN@LAL: nba-den-lal-2026-10-16
 2026-10-16T22:05:33-07:00 no live games; next start 2026-10-17 16:00:00+00:00; stopping
 2026-10-16T22:05:33-07:00 finished
+2026-10-17T09:04:08-07:00 CIN@WVU: cfb-cin-wvir-2026-10-17 (search)
+2026-10-17T09:04:09-07:00 BALL@BGSU: cfb-ballst-bowlgr-2026-10-17 (search)
+2026-10-17T09:04:09-07:00 KU@KSU: cfb-kan-kanst-2026-10-17 (search)
+2026-10-17T09:04:10-07:00 CHSO@CLEM: cfb-chsou-clmsn-2026-10-17 (search)
+2026-10-17T09:04:10-07:00 URI@YALE: cfb-ri-yale-2026-10-17 (search)
+2026-10-17T09:04:11-07:00 NH@RMU: cfb-nhc-robms-2026-10-17 (search)
+2026-10-17T09:04:12-07:00 DUQ@STO: cfb-duq-stnh-2026-10-17 (search)
+2026-10-17T09:04:19-07:00 BRWN@PRIN: cfb-brwn-prnce-2026-10-17 (search)
+2026-10-17T09:04:57-07:00 FAU@ARMY: cfb-flatl-army-2026-10-17 (search)
+2026-10-17T09:05:58-07:00 HAMP@SHU: cfb-hamp-sacred-2026-10-17 (search)
+2026-10-17T09:06:54-07:00 NU@MSU: cfb-nw-mst-2026-10-17 (search)
+2026-10-17T09:08:03-07:00 FLA@TEX: cfb-fl-tx-2026-10-17 (search)
+2026-10-17T09:10:54-07:00 UVA@SMU: cfb-vir-smu-2026-10-17 (search)
+2026-10-17T09:15:45-07:00 OSU@IU: cfb-ohiost-ind-2026-10-17 (search)
+2026-10-17T09:29:49-07:00 cfb scoreboard error The read operation timed out
+2026-10-17T09:37:48-07:00 RUTG@MD: cfb-rutger-mary-2026-10-17 (search)
+2026-10-17T10:02:41-07:00 MORE@DAV: cfb-more-dav-2026-10-17
+2026-10-17T10:02:49-07:00 BRY@ME: cfb-bryant-maine-2026-10-17 (search)
+2026-10-17T10:02:50-07:00 MRST@DRKE: cfb-mrst-drake-2026-10-17 (search)
+2026-10-17T10:02:58-07:00 CLT@TEM: cfb-charlt-templ-2026-10-17 (search)
+2026-10-17T10:02:59-07:00 MASS@BUFF: cfb-umass-buf-2026-10-17 (search)
+2026-10-17T10:03:08-07:00 CIT@TA&M: cfb-cita-txam-2026-10-17 (search)
+2026-10-17T10:03:09-07:00 MRMK@DART: cfb-merri-dart-2026-10-17 (search)
+2026-10-17T10:03:10-07:00 MCN@NWST: cfb-mcnst-nwst-2026-10-17 (search)
+2026-10-17T10:03:19-07:00 GTWN@COLG: cfb-gtwn-colg-2026-10-17
+2026-10-17T10:03:28-07:00 MONM@UNH: cfb-monm-nhamp-2026-10-17 (search)
+2026-10-17T10:03:29-07:00 DAY@BTLR: cfb-day-but-2026-10-17 (search)
+2026-10-17T10:05:24-07:00 HC@HARV: cfb-holy-harv-2026-10-17 (search)
+2026-10-17T10:31:56-07:00 VMI@WOF: cfb-vamil-woff-2026-10-17 (search)
+2026-10-17T11:01:33-07:00 PRES@STET: cfb-presb-stet-2026-10-17 (search)
+2026-10-17T11:02:57-07:00 LEH@COR: cfb-lehi-cor-2026-10-17 (search)
+2026-10-17T11:03:35-07:00 APSU@WES: cfb-ausp-uwg-2026-10-17 (search)
+2026-10-17T11:04:23-07:00 WES@UWF: cfb-uwa-uwfl-2026-10-17 (search)
