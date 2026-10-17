@@ -1,6 +1,6 @@
 """Listing watcher (Oct 16, 2026): when does Polymarket US first post next week's NFL and college football games?
 Opening lines are softest, so the card bots should bet as soon as games are listed. Every 30 minutes this checks every
-NFL/college game in the next 8 days (ESPN schedule) and records the first time its Polymarket market exists, plus the
+NFL/college game in the next 16 days (ESPN schedule) and records the first time its Polymarket market exists, plus the
 opening moneyline price. Market data only; nothing about trades. Output: out/listings.csv"""
 import csv, os, datetime as dt
 import record_all as R
@@ -15,7 +15,7 @@ def main():
         seen = {(r['sport'], r['game'], r['kickoff_pt'][:10]) for r in csv.DictReader(open(P))}
     now = dt.datetime.now(dt.timezone.utc); new = []
     for sp in ('nfl', 'cfb'):
-        for g in R.games(sp, now, ahead=8).values():
+        for g in R.games(sp, now, ahead=16).values():
             k = (sp, f"{g['a']}@{g['h']}", g['start'].astimezone(R.PT).isoformat()[:10])
             if g['state'] != 'pre' or k in seen:
                 continue
