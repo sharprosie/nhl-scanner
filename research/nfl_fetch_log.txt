@@ -1,0 +1,7 @@
+tag nfl events so far 277
+0 events done 1
+100 events done 100
+200 events done 200
+PM DONE 273 games
+espn games 283
+ESPN DONE 283 games; 283 with wall clock
