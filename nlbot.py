@@ -4,8 +4,8 @@ Rules (bot.json can turn it off or change sizes):
   - skips if less than ~$1 is for sale at the price, or if we already hold the other team in this game
   - the gap must show on two checks in a row (~2 seconds apart) with the same score
   - if the price just fell 10c+ in the last minute, wait until that drop is a minute old (same reason)
-  - go hard (Oct 16): real chance 98%+ AND 8c+ under it -> $6 a trade, $10 a game, nightly room up to $20
-  - otherwise $2 a trade, $4 a game, $12 a night; one buy per market per night; buy-only, immediate-or-cancel
+  - go hard (Oct 16): real chance 98%+ AND 8c+ under it -> $6 a trade, $10 a game, (same $40 a night)
+  - otherwise $2 a trade, $4 a game; $40 a night for everything (Oct 16) one buy per market per night; buy-only, immediate-or-cancel
   - stops for the night after 3 losses in a row, $8 net loss, 3 order errors, or a rejected key
 Public repo rule: nothing about trades is printed or committed. State lives in bot_state/ (Actions cache only);
 each trade goes to your phone."""

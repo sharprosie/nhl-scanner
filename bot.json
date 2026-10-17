@@ -2,7 +2,7 @@
   "live": true,
   "per_trade": 2.0,
   "per_game": 4.0,
-  "per_night": 12.0,
+  "per_night": 40.0,
   "min_gap": 0.06,
   "hold_secs": 1.5,
   "poll_secs": 2,
@@ -32,5 +32,7 @@
       "game_cap": 10.0,
       "week_cap": 50.0
     }
-  }
+  },
+  "big_night": 40.0,
+  "max_night_loss": 20.0
 }
